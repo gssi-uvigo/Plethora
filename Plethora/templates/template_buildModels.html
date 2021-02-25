@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+
+    <title>Word embeddings custom training tool</title>
+
+    <link rel="stylesheet" href="../css/style_buildModels.css">
+</head>
+<body>
+
+    <!-- Starting of the interface HTML page  -->
+
+    <div id="info"> <!-- Interface -->
+
+        <h1>Word embeddings custom training tool</h1>
+
+        <h2>Create a group of D2V models with multiple parameters</h2>
+
+        <div id="trainingOptions"> <!-- Selects with build and train options -->
+
+            <h3>Models type</h3>
+            <div class="training-option-div">
+                <div>
+                    <select id="modelsTypeSelect">
+                        <option value="d2v" selected>Doc2Vec</option>
+                        <option value="w2v">Word2Vec</option>
+                    </select>
+                </div>
+            </div>
+
+            <h3>Training files path</h3>
+            <div class="training-option-div">
+
+                <div class="inline-div">
+                    <span id="trainingDocsPathPrefix" class="input-prefix">KORPUS/</span>
+                    <input id="trainingDocsPathInput" class="input-after-prefix" value="{{training_docs_path}}" type="text"/>
+                </div>
+
+                <div id="trainingPercentDiv" class="inline-div">
+                        <input id="trainingPercentInput" type="number" min="0" max="100" value=50></input>
+                        <a id="trainingPercentInputSuffix">%</a>
+                </div>
+
+            </div>
+
+            <h3>Models folder</h3>
+            <div class="training-option-div">
+                <div class="inline-div">
+                    <span id="modelsFolderPrefix" class="input-prefix">KORPUS/</span>
+                    <input id="modelsFolderInput" class="input-after-prefix" value="{{models_folder}}" type="text"/>
+                </div>
+            </div>
+
+        </div>
+
+        <h3>Hyperparameters list</h3>
+
+        <div id="paramTable"><div class="param-card plus"></div></div> <!-- Divs list to select multiple params -->
+
+        <h2><div id="createGroupButton" class="action-button" enabled="true">Create group</div></h2> <!-- Req /buildAndTrainNewModelGroup with all params -->
+
+        <h2>Saved groups <div id="updateButton" class="action-button" enabled="true">Update view</div></h2> <!-- Req /getAllSavedD2VGroups to update the groups list -->
+
+        <div id="groupsList"></div> <!-- Show all saved groups -->
+
+        <canvas id="canvas"></canvas>
+
+        <div id="paramButtonsContainer" class="param-buttons-container"></div>
+
+    </div>
+
+
+    <div id="console"></div> <!-- Log console  -->
+
+    <!-- jQuery CDN -->
+    <script src="https://code.jquery.com/jquery-1.12.0.min.js"></script>
+
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@2.8.0"></script>
+
+    <!-- Inputs descriptions -->
+    <script>
+        $("#modelsTypeSelect")[0].title = "Model type - Word2Vec or Doc2Vec"
+        $("#trainingDocsPathInput")[0].title = "Path to a file with a list of training file paths or a folder with these training files"
+        $("#trainingPercentDiv")[0].title = "Percentage of the corpus to be used in the model training"
+        $("#modelsFolderInput")[0].title = "Directory where model groups will be saved"
+        $("#createGroupButton")[0].title = "Send parameters to the Server and create the new group"
+        $("#updateButton")[0].title = "Update the saved groups list below"
+        $("#paramButtonsContainer")[0].title = "Hyperparameters with different values between models. Select one to use in the Chart"
+        
+    </script>
+
+    <script>
+
+        const SERVER_DIR = "http://localhost:6060"
+
+        var hyperparameters = [] // Ask server for params.json -> {d2v: [...], w2v: [...]}
+                                 // Select d2v or w2v params in the Object
+        var selectedTypeHyperparameters = [] // Update this array with hyperparameters.d2v or hyperparameters.w2v according to modelsTypeSelect
+
+        const onezeroValuesPattern = /^$|^[0,1]$/
+        const intValuesPattern = /^$|^(-?\d+((:-?\d+)?){2})(,(-?\d+((:-?\d+)?){2}))*$/
+        const intPositiveValuesPattern = /^$|^(\d+((:\d+)?){2})(,(\d+((:\d+)?){2}))*$/
+        const floatValuesPattern = /^$|^(-?\d+(\.\d+)?((:-?\d+(\.\d+)?)?){2})(,(-?\d+(\.\d+)?((:-?\d+(\.\d+)?)?){2}))*$/
+        const floatPositiveValuesPattern = /^$|^(\d+(\.\d+)?((:\d+(\.\d+)?)?){2})(,(\d+(\.\d+)?((:\d+(\.\d+)?)?){2}))*$/
+
+        const defaultFloatValueStep = 0.1
+        const defaultNaturalValueStep = 1
+
+        const ctx = document.getElementById('canvas').getContext('2d')
+        var visibleChart = null
+
+        // Log console handler
+        const logUpdate = {
+            stack: [],
+            lastLogIndex: -1,
+            init: function(callback=()=>{}) {
+                //console.log("init")
+                $("#console").empty()
+                $.ajax({
+                    type: "GET",
+                    url: SERVER_DIR + "/getLog",
+                    data: {"idx": logUpdate.lastLogIndex +1},
+                    success: function(result) {
+                        logUpdate.lastLogIndex = result.lastidx
+                        callback()
+                    }
+                })
+            },
+            upd: function() {
+                //console.log("upd - " + logUpdate.stack.length)
+                $.ajax({
+                    type: "GET",
+                    url: SERVER_DIR + "/getLog",
+                    data: {"idx":logUpdate.lastLogIndex +1},
+                    success: function(result) {
+                        if (logUpdate.lastLogIndex < result.lastidx) {
+                            let fidx = logUpdate.lastLogIndex
+                            logUpdate.lastLogIndex = result.lastidx
+                            result.msgs.forEach((msg, i) => {
+                                let newp = $(document.createElement('p'))
+                                newp.text(`[${fidx + i + 1}] ${msg}`)
+                                $("#console").append(newp)
+                                $("#console").scrollTop($("#console")[0].scrollHeight)
+                            })
+                        } else if (logUpdate.lastLogIndex > result.lastidx) {
+                            logUpdate.init(() => logUpdate.upd())
+                        }
+
+                        if (logUpdate.stack.length > 0) setTimeout(logUpdate.upd, 1000)
+                    }
+                })
+            },
+            pop: function() {
+                setTimeout(() => {
+                    //console.log("pop")
+                    this.stack.pop()
+                }, 1000)
+            },
+            push: function() {
+                //console.log("push - " + logUpdate.stack.length)
+                logUpdate.stack.push(1)
+                if (logUpdate.stack.length == 1) logUpdate.upd()
+            }
+        }
+
+        // Update the groups list (1.) with the saved groups
+        function updateGroupsView() {
+            $("#updateButton").attr("enabled", "false")
+
+            $.ajax({
+                type: "GET",
+                url: SERVER_DIR + "/getAllSavedGroups",
+                data: {"models_folder": $("#modelsFolderInput").val()},
+                success: function(result) {
+                    $("#groupsList").empty()
+                    updateGroupChart(null)
+
+                    let selectedType = $("#modelsTypeSelect option:selected").val()
+                    let groupSummaries = (selectedType !== "d2v") ? result.word2vec : result.doc2vec
+
+                    groupSummaries.forEach(group => {
+                        let groupDiv = $(document.createElement('div'))
+                        let groupTittle = $(document.createElement('h3'))
+
+                        groupTittle.text(group.name)
+
+                        groupDiv.addClass("group-card")
+
+                        // update the bottom chart when a group is clicked
+                        groupDiv.click(e => {
+                            let selected = groupDiv.attr("selected")
+                            if (selected) {
+                                groupDiv.removeAttr("selected")
+                                updateGroupChart(null)
+                            } else {
+                                $("#groupsList .group-card").removeAttr("selected")
+                                groupDiv.attr("selected", "true")
+                                updateGroupChart(group)
+                                $("#canvas")[0].scrollIntoView()
+                            }
+                        })
+
+                        groupDiv.append(groupTittle)
+                        $("#groupsList").append(groupDiv)
+                    })
+
+                },
+                beforeSend: function() {logUpdate.push()},
+                complete: function() {
+                    logUpdate.pop()
+                    $("#updateButton").attr("enabled", "true")
+                }
+            })
+        }
+
+        // Adds another card to define a new parameter-value
+        function createNewParamCard() {
+            let plusDiv = $("#paramTable .plus")
+
+            let remDiv = $(document.createElement("div"))
+            let dataDiv = $(document.createElement("div"))
+            let paramNameP = $(document.createElement("p"))
+            let paramNameSelect = $(document.createElement("select"))
+            let paramValueP = $(document.createElement("p"))
+            let paramValueInput = $(document.createElement("input"))
+
+            plusDiv.removeClass('plus')
+            remDiv.addClass("rem")
+            dataDiv.addClass("data")
+            paramNameP.addClass("nameMessage").text("Name")
+            paramNameSelect.addClass("param-name").attr("name", "paramName")
+            paramValueP.addClass("valuesMessage")
+            paramValueInput.addClass("param-data").attr("name", "paramData").attr("type", "text").attr("placeholder", "50:10:100").attr("valid", "true")
+
+            plusDiv.off("click")
+            remDiv.click(() => {plusDiv.remove(); updateSelectOptionsInParamCards()})
+            paramNameSelect.change(() => updateSelectOptionsInParamCards())
+
+            plusDiv.append(remDiv, dataDiv)
+            dataDiv.append(paramNameP, paramNameSelect, paramValueP, paramValueInput)
+
+            $(paramValueInput).on("input", function() {
+
+                // TODO: when the button is disabled because of a request waiting, it must be disabled until the request ends. However,
+                //       is the user set an input the button is enabled. FIX THIS
+
+                // TODO: this listener activates or disactivates the button according to only the last check. If a card value is invalid 
+                //       and then write a valid value in the next one, the button will be activate . FIX THIS
+
+                let validFunc = function(valid) {
+                    if (valid == false) {
+                        $("#createGroupButton").attr("enabled", "false")
+                        $(paramValueInput).attr("valid", "false")
+                    } else {
+                        $("#createGroupButton").attr("enabled", "true")
+                        $(paramValueInput).attr("valid", "true")
+                    }
+                }
+
+                let pFormat = selectedTypeHyperparameters.find(p => p.name === paramNameSelect.val()).format
+
+                let pVal = $(paramValueInput).val()
+
+                switch(pFormat) {
+                    case "onezero":
+                        validFunc(onezeroValuesPattern.test(pVal))
+                        break
+                    case "int":
+                        validFunc(intValuesPattern.test(pVal))
+                        break
+                    case "int-positive":
+                        validFunc(intPositiveValuesPattern.test(pVal))
+                        break
+                    case "float":
+                        validFunc(floatValuesPattern.test(pVal))
+                        break
+                    case "float-positive":
+                        validFunc(floatPositiveValuesPattern.test(pVal))
+                        break
+                }
+
+            })
+
+            let newPlus = $(document.createElement('div'))
+            newPlus.addClass('param-card plus')
+            newPlus.click(() => {
+                if ($("#paramTable .param-card:not(.plus)").length < selectedTypeHyperparameters.length)
+                    createNewParamCard()
+            })
+            $("#paramTable").append(newPlus)
+
+            updateSelectOptionsInParamCards()
+
+            return plusDiv
+        }
+
+        // Update the options values in every ParamCard Select
+        function updateSelectOptionsInParamCards() {
+            let paramCardsSelects = $("#paramTable .param-card:not(.plus) select.param-name")
+            let paramCardsSelectedOptionsValues = paramCardsSelects.find("option:selected").map((i, o) => o.value).toArray().filter(v => v)
+            let allOptionsValues = ["", ...selectedTypeHyperparameters.map(p => p.name)]
+
+            // Update default value views with param.json data (in 'selectedTypeHyperparameters')
+            let paramCards = $("#paramTable .param-card:not(.plus)")
+            paramCards.each(function(i, card) {
+                let pName = $(card).find("select option:selected").val()
+                let vMsgP = $(card).find(".valuesMessage")
+                let hpInfo = selectedTypeHyperparameters.find(p => p.name == pName)
+                if (hpInfo)
+                    vMsgP.text(`Values [default = ${hpInfo.default}]`)
+                else
+                    vMsgP.text("Values [ _ ]")
+            })
+
+            // Check every Select of every param card
+            paramCardsSelects.each((i, select) => {
+
+                // Get all options in this select
+                let options = $(select).find("option")
+                // Get the selected option in this select
+                let selectedOption = $(select).find("option:selected")
+
+                // Remove all options that were already selected in another select
+                options.each((i, option) => {
+                    let optionVal = $(option).val()
+                    if (paramCardsSelectedOptionsValues.includes(optionVal) && optionVal !== selectedOption.val())
+                        $(option).remove()
+                })
+
+                // Insert all free options
+                allOptionsValues.forEach(v => {
+                    // Get all options values of this select (stores in array)
+                    let optionsValues = $(select).find("option").map((i, o) => o.value).toArray()
+                    // Insert the new option if the value is not already in this Select or is selected in another Select
+                    if (!optionsValues.includes(v) && !paramCardsSelectedOptionsValues.includes(v)) {
+                        let newOption = $(document.createElement("option")).val(v).text(v ? v : " - select param - ")[0]
+                        // Index of the next element from this new option
+                        // (options are sorted according to server response array)
+                        let sortedIndex = optionsValues.indexOf(optionsValues.find(p => {
+                            let pPrio = allOptionsValues.indexOf(p)
+                            let vPrio = allOptionsValues.indexOf(v)
+                            return pPrio > vPrio
+                        }))
+                        // Insert the new option before the element in sortedIndex
+                        select.insertBefore(newOption, select.children[sortedIndex])
+                    }
+                })
+
+            })
+        }
+
+        // Collects parameter-value pairs from all cards and makes a POST request to /buildAndTrainNewModelGroup
+        function collectParamsAndCreateGroup() {
+            let groupName = prompt('Escoja un nombre para el grupo: ', 'testgroup')
+            if (groupName == null) return -1
+
+            $("#createGroupButton").attr("enabled", "false")
+
+            let modelsType = $("#modelsTypeSelect option:selected").val()
+            let trainingDocsPath = $("#trainingDocsPathInput").val()
+            let percentageTrainingCorpus = $("#trainingPercentInput").val()
+            let modelsFolder = $("#modelsFolderInput").val()
+
+            let params = {}
+            let cardsData = $(".param-card .data")
+            cardsData.each(function(i, cardData) {
+                let key, value
+                key = $(cardData).find("select[name='paramName']").val()
+                if (key) {
+                    let hpInfo = selectedTypeHyperparameters.find(p => p.name === key)
+                    if (hpInfo) {
+                        let paramValue = $(cardData).find("input[name='paramData']").val()
+                        value = parsePattern(paramValue, hpInfo.format)
+                    }
+                }
+                if (key.length > 0 && value.length > 0) params[key] = value
+            })
+
+            $.ajax({
+                type: "POST",
+                url: SERVER_DIR + "/buildAndTrainNewModelGroup",
+                contentType: 'application/json',
+                data: JSON.stringify({"group_name": groupName, "models_type": modelsType, "training_docs_path": trainingDocsPath, "percentage_training_corpus": percentageTrainingCorpus, "models_folder": modelsFolder, "params": params}),
+                success: function(result) {
+                    console.log(result)
+                    updateGroupsView()
+                },
+                error: function(res) {},
+                beforeSend: function() {
+                    logUpdate.push()
+                },
+                complete: function() {
+                    logUpdate.pop()
+                    $("#createGroupButton").attr("enabled", "true")
+                },
+            })
+        }
+
+        // Transforms the input pattern into a sorted list of numbers
+        function parsePattern(input, type) {
+
+            let values = []
+            let defaultStep = type.startsWith("float") ? defaultFloatValueStep : defaultNaturalValueStep
+
+            input.split(',').forEach(elem => {
+                if (!elem) return []
+
+                nrange = elem.split(':')
+
+                if (nrange.length == 1) {
+                    values.push(parseFloat(nrange))
+
+                } else if (nrange.length == 2) {
+                    let vInit = parseFloat(nrange[0])
+                    let vEnd = parseFloat(nrange[1])
+                    if (vInit < vEnd)
+                        for (let i = vInit; i <= vEnd; i += defaultStep) values.push(i)
+                    else
+                        for (let i = vInit; i >= vEnd; i -= defaultStep) values.push(i)
+
+                } else if (nrange.length == 3) {
+                    let vInit = parseFloat(nrange[0])
+                    let vEnd = parseFloat(nrange[2])
+                    let step = parseFloat(nrange[1])
+                    if (step > 0)
+                        for (let i = vInit; i <= vEnd; i += step) values.push(i)
+                    else
+                        for (let i = vInit; i >= vEnd; i -= step) values.push(i)
+                }
+            })
+
+            return values
+        }
+
+        // Update the hyperparameters options and the group list, according to the selected type
+        function updateModelType() {
+            // get the new type
+            let selectedTypeVal = $("#modelsTypeSelect option:selected").val()
+
+            // select the w2v or d2v hparams according to the new type. Update 'selectedTypeHyperparameters'
+            if (selectedTypeVal === "w2v")
+                selectedTypeHyperparameters = hyperparameters.word2vec
+            else
+                selectedTypeHyperparameters = hyperparameters.doc2vec
+
+            // reset selected hyperparameters
+            $("#paramTable .param-card:not(.plus)").remove()
+
+            createNewParamCard()
+            updateGroupsView()
+        }
+
+        // Update the info with the given summary.json
+        function updateGroupChart(groupSummary, hparamName) {
+
+            $("#paramButtonsContainer").empty()
+
+            // remove the chart if already exists
+            if (visibleChart != null)
+                visibleChart.destroy()
+
+            if (groupSummary == null)
+                return
+            
+            let models = groupSummary.models
+
+            // obtain all hparams with different values across all models of the group
+            let hpsDiff = []
+            for (let i=0; i < models.length-1; i++) {
+                let mdl = models[i]
+                let hps = Object.keys(mdl.hyperparams)
+                let nxtMdls = models.slice(i+1)
+                hps.forEach(hp => nxtMdls.forEach(nxtMdl => {
+                    if (!hpsDiff.includes(hp) && mdl.hyperparams[hp] !== nxtMdl.hyperparams[hp])
+                        hpsDiff.push(hp)
+                }))
+            }
+            
+            // update buttons below with hparams that have any difference
+            hpsDiff.forEach(dhp => {
+                let button = $(document.createElement("div"))
+                button.addClass("param-button")
+                button.text(dhp)
+                button.attr("selected", "true")
+                button.click(() => {
+                    $("#paramButtonsContainer .param-button").removeAttr("selected")
+                    button.attr("selected", "true")
+                    updateGroupChart(groupSummary, dhp)
+                })
+                $("#paramButtonsContainer").append(button)
+            })
+
+            hparamName = hparamName || hpsDiff[0]
+
+            // sort models list by 'hparamName' hyperparameter values
+            models = models.sort((m1, m2) => m1.hyperparams[hparamName] - m2.hyperparams[hparamName])
+
+            // create a new graph with the summary of the given group, and the given hyperparameter on the X-axis
+            visibleChart = new Chart(ctx, {
+                type: 'line', // Type of chart we want to create
+                data: { // Data for our dataset
+                    labels: models.map(mdl => mdl.hyperparams[hparamName]),
+                    datasets: [
+                        {
+                            label: 'Trainning Time',
+                            data: models.map(mdl => mdl.total_train_time),
+                            hidden: false
+                        },
+                        {
+                            label: 'File Size',
+                            data: models.map(mdl => mdl.size),
+                            hidden: true
+                        }
+                    ]
+                },
+                options: { // Configuration options
+                    title: {
+                        display: true,
+                        text: groupSummary.name
+                    },
+                    scales: {
+                        yAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: "Trainning Time"
+                            },
+                            ticks: {
+                                // format Y-axis values. Time values {s, m, h} - Size values {B, KB, MB, GB, TR}
+                                callback: function(value, index, values) {
+                                    value = parseFloat(value)
+                                    if (this.options.scaleLabel.labelString === "Trainning Time") {
+                                        let time_labels = {0 : 's', 1: 'm', 2: 'h'}
+                                        let n = 0
+                                        for (; value >= 60 && n < 2; n++)
+                                            value /= 60
+                                        return value.toFixed(2) + ' ' + time_labels[n]
+                                    } else {
+                                        let power_labels = {0 : 'B', 1: 'KB', 2: 'MB', 3: 'GB', 4: 'TB'}
+                                        let power = 2**10
+                                        let n = 0
+                                        for (; value > power && n < 4; n++)
+                                            value /= power
+                                        return value.toFixed(4) + ' ' + power_labels[n]
+                                    }
+                                    
+                                }
+                            }
+                        }],
+                        xAxes: [{
+                            scaleLabel: {
+                                display: true,
+                                labelString: hparamName
+                            }
+                        }]
+                    },
+                    legend: {
+                        position: "top",
+                        onHover: function(e, legendItem) {
+                            e.target.style.cursor = 'pointer'
+                        },
+                        onLeave: function (e) {
+                            e.target.style.cursor = 'default'
+                        },
+                        onClick: function(e, legendItem) {
+                            let index = legendItem.datasetIndex
+                            let ci = this.chart
+                            let selectedDs = ci.data.datasets[index]
+                            ci.data.datasets.forEach((ds, i) => ds.hidden = (i != index) ? true : false)
+                            ci.options.scales.yAxes[0].scaleLabel.labelString = selectedDs.label
+                            ci.update()
+                        }
+                    }
+                }
+            })
+            return visibleChart
+        }
+
+        $("#modelsTypeSelect").change(updateModelType)
+        $("#updateButton").click(updateGroupsView)
+        $("#createGroupButton").click(collectParamsAndCreateGroup)
+        $("#paramTable div .plus").click(createNewParamCard)
+        $("#trainingOptions div").each((i, option) => {
+            let input = $(option).find(".input-after-prefix")
+            let prefix = $(option).find(".input-prefix")
+            input.on("input", function() {
+                if (input.val().startsWith("/")) {
+                    prefix.hide()
+                    input.css("border-left", "1px solid #ccc")
+                } else {
+                    prefix.show()
+                    input.css("border-left", "0")
+                }
+            })
+        })
+        $.ajax({
+            type: "GET",
+            url: SERVER_DIR + "/params",
+            success: function(result) {
+                hyperparameters = result
+                $("#modelsTypeSelect option[value={{models_type}}]").attr("selected", "true")
+                updateModelType()
+            }
+        })
+
+        logUpdate.init(() => updateGroupsView())
+        
+        $.ajax({
+            type: "GET",
+            url: SERVER_DIR + "/getKorpusPath",
+            success: function(result) {
+                $("#trainingDocsPathPrefix").text(result.korpus)
+                $("#modelsFolderPrefix").text(result.korpus)
+            }
+        })
+
+        $("#trainingPercentInput").change(function() {
+            let val = parseInt($("#trainingPercentInput").val())
+            if (!val || typeof val !== "number")
+                val = 0
+            else if (val > 100)
+                val = 100
+            else if (val < 0)
+                val = 0
+            $("#trainingPercentInput").val(val)
+        })
+
+    </script>
+
+</body>
+</html>
