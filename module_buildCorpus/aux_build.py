@@ -12,7 +12,7 @@ from gensim.parsing.preprocessing import STOPWORDS as GENSIM_STOPWORDS
 # initial text for corpus building
 INITIAL_TEXT = 'initialText.txt'
 
-CORPUS_FOLDER = os.getenv('HOME') + "/KORPUS/"
+CORPUS_FOLDER = os.getenv('HOME') + "/CloudStation/KORPUS2/"
 
 MODELS_FOLDER = CORPUS_FOLDER+"MODELS/"
 # LEE_D2V_MODEL = MODELS_FOLDER+"d2v_lee.without_stopwords.model"

@@ -17,7 +17,7 @@ from px_aux import Print as _Print
 
 from aux_build import hasFieldPT as _hasFieldPT, SortTuplaList_byPosInTupla as _SortTuplaList_byPosInTupla
 from aux_build import CORPUS_FOLDER as _CORPUS_FOLDER, URLs_FOLDER as _URLs_FOLDER,  SCRAPPED_PAGES_FOLDER as _SCRAPPED_PAGES_FOLDER
-from aux_build import MODELS_FOLDER as _MODELS_FOLDER, LEE_D2V_MODEL as _LEE_D2V_MODEL, AP_D2V_MODEL as _AP_D2V_MODEL
+from aux_build import MODELS_FOLDER as _MODELS_FOLDER,  AP_D2V_MODEL as _AP_D2V_MODEL
 from aux_build import getWikicatComponents as _getWikicatComponents, moreRecent as _moreRecent
 from aux_build import filterSimpleWikicats as _filterSimpleWikicats, filterSimpleSubjects as _filterSimpleSubjects
 from aux_build import CORPUS_MIN_TXT_SIZE as _CORPUS_MIN_TXT_SIZE

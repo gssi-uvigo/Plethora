@@ -1,0 +1,6 @@
+*~
+*.pyc
+KORPUS/*
+*.log
+.DS_Store
+*.p
