@@ -1,5 +1,5 @@
 # GSSI Plethora
-This is a repository for the Plethora project code
+This is a repository for the code of the Plethora project 
 
 module_buildCorpus - subproject to build a corpus of ad hoc texts selected from Internet
 
