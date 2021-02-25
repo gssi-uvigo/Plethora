@@ -107,7 +107,7 @@
 			</h3>
 
 			<div id='contentF1_showWikicats'></div>  <!-- empty div to later show wikicats identified in text -->
-			<input style="font-size: 14px; margin-bottom: 10px; background-color: #0066cc; color: white" type="button" id="showAllWikicats" value="show all wikicats">
+			<!--input style="font-size: 14px; margin-bottom: 10px; background-color: #0066cc; color: white" type="button" id="showAllWikicats" value="show all wikicats"-->
 			<div class="form-group" style="margin-bottom: 0px">
 				<input style="background-color: #0066cc; color: white" id="submitF1_findURLs" type="button" value="Next (ph2: Find candidate URLs)"></input>
 				&nbsp;&nbsp;&nbsp;&nbsp;
@@ -123,7 +123,7 @@
 			</h3>
 
 			<div id='contentF2_showNumberUrls'></div> <!-- empty div to later show number of candidate URLs discovered for each wikicat -->
-			<input style="font-size: 14px; margin-bottom: 10px; background-color: #0066cc; color: white" type="button" id="showAllNumberUrls" value="show all numbers">
+			<!--input style="font-size: 14px; margin-bottom: 10px; background-color: #0066cc; color: white" type="button" id="showAllNumberUrls" value="show all numbers"-->
 			<div class="form-group" style="margin-bottom: 0px">
 				<input style="background-color: #0066cc; color: white" id="submitF2_DownloadURLs" type="button" value="Next (ph3: Download and clean candidate URLs)"></input>
 				&nbsp;&nbsp;&nbsp;&nbsp;
@@ -258,7 +258,7 @@
 					wikicatList = result["P1_wikicats"]   // this is the list of wikicats in text
 					selWikicats =  result["P1_selectedWikicats"]
 
-					results = "<b>"+wikicatList.length+" wikicats</b> (click 'show all' for the full set)<br>\n"
+					results = "<b>"+wikicatList.length+" wikicats</b><br>\n"
 					results += "<table>"
 					fila=0
 					shown=0
@@ -307,7 +307,6 @@
 							console.log(result)
 
 							if (result.hasOwnProperty("error")) {
-								alert("error received!")
 								results = "<b style='color: red'>"+result["error"]+"</b>"
 								$(contentF1_showWikicats).html(results)
 							}
@@ -380,7 +379,7 @@
 					selWikicats = result["P1_selectedWikicats"]
 
 					// present the summary of results
-					results = "<b>"+selWikicats.length+" wikicats</b> (click 'show all' for the full set)<br>\n"
+					results = "<b>"+selWikicats.length+" wikicats</b><br>\n"
 					results += "<table style='border: 1px solid'>"
 					fila=0
 					shown = 0

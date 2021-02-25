@@ -44,6 +44,9 @@ def findEntities (filename, confPar, supPar):
 	# see section 6.4 of the document describing the architecture for the formats of request and answer
 	dbsl_response = requests.post(_URL_DB_SL_annotate, data={"text": content, "confidence": confPar, "support": supPar}, headers={"accept": "application/json", "content-type": "application/x-www-form-urlencoded"})
 
+	if (dbsl_response.status_code != 200):
+		raise Exception("DBpedia SpotLight connection error: "+_URL_DB_SL_annotate)
+
 	# the previous one is a synchronous call, anly returns after receiving the answer, that will be passed now to JSON
 	try:
 		dbsl_json = dbsl_response.json()
@@ -73,20 +76,28 @@ def findEntities (filename, confPar, supPar):
 # output 'source.p' result file and 'source.p.html' with entities highlighted
 def processS2File(source, confidence=0.5, support=1):
 	if not source.endswith(".s"):
-		print(source+" has not '.s' extension")
-		return -1
+		message = source+" has not '.s' extension"
+		print(message)
+		raise Exception(message)
 
 	if not os.path.exists(source):
-		print(source, "not found!")
-		return -1
+		message = source+" not found!"
+		print(message)
+		raise Exception(message)
 
 	_Print("Processing file "+source+"...\n")
-	entities = findEntities(source, confidence, support)
-	pickle.dump(entities, open(source+".p", "wb" ))
+	try:
+		entities = findEntities(source, confidence, support)
+		pickle.dump(entities, open(source+".p", "wb" ))
 
-	highlightedContent = _getContentMarked(source, 's')
-	_saveFile(source+".p.html", highlightedContent)
+		highlightedContent = _getContentMarked(source, 's')
+		_saveFile(source+".p.html", highlightedContent)
+	except Exception as e:
+		message = "Problem detecting entities: "+str(e)
+		print(message)
+		raise Exception(message)
 
+	return 0
 
 
 # to process a folder and save results.

@@ -113,22 +113,30 @@ def doPh1 (P0_originalText):
 		print("Saving original text")
 		_saveFile(filename_txt, P0_originalText)  # if not exists, save it
 
-		# preprocess txt file to obtain .s, .p and .w
-		try:
-			print("Processing S1...")
+	# preprocess txt file to obtain .s, .p and .w
+	try:
+		sfilename = filename_txt+".s"
+		if os.path.exists(sfilename) and _moreRecent(sfilename, filename_txt):
+			print("No need to do Processing S1...")
+		else:
+			print("***** Processing S1...")
 			_processS1File(filename_txt)  # creates .s file
 
-			print("Processing S2...")
+		pfilename = sfilename+".p"
+		if os.path.exists(pfilename) and _moreRecent(pfilename, sfilename):
+			print("No need to do Processing S2...")
+		else:
+			print("***** Processing S2...")
 			_processS2File(filename_txt+".s")  # creates .p file
 
-			print("Processing S3...")
-			_processS3File(filename_txt+".s")  # creates .w file
+		print("\n\n***** Processing S3...")
+		_processS3File(filename_txt+".s")  # creates .w file
 
-		except Exception as e:
-			result["error"] = str(e)
-			print("Exception in preprocessing "+modelFilename+" in doPh1:", str(e))
-			_appendFile(logFilename, "Exception in preprocessing "+modelFilename+" in doPh1: "+str(e))
-			return result
+	except Exception as e:
+		result["error"] = str(e)
+		print("Exception in preprocessing "+filename_txt+" in doPh1:", str(e))
+		_appendFile(logFilename, "Exception in preprocessing "+filename_txt+" in doPh1: "+str(e))
+		return result
 
 
 	filename_wk = lengthFolder+str(lenOriginalText)+".ph1.txt.wk"   # filename for wikicats (length.ph1.wk)
