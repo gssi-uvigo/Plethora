@@ -1,0 +1,205 @@
+/* * {
+    outline: 2px dotted red;
+}*/
+
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+    font-family: 'Poppins', sans-serif;
+    background: #fafafa;
+}
+
+h1, h2 {
+    color: #0066cc;
+}
+h3 {
+    color: #0f66cc;
+}
+
+.action-button {
+    cursor: pointer;
+    display: inline-block;
+    padding: 10px 20px;
+    border-radius: 8px;
+    color: #FFFFFF;
+    background-color: #0066cc;
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.2);
+    font-size: medium;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+.action-button:hover {
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.8);
+}
+
+.action-button:active {
+    background-color: #0251a0;
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.8);
+}
+
+.action-button[enabled="false"] {
+    background-color: #000000;
+    pointer-events: none;
+    cursor: default;
+}
+
+#info {
+    width: 70%;
+}
+
+#console p::before {
+    content: " >> ";
+}
+
+#console {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 70%;
+    background-color: rgba(0, 0, 0, 0.9);
+    border-radius: 8px;
+    color: white;
+    overflow: auto;
+    padding: 5px;
+    margin: 10px;
+}
+
+
+#trainingOptions select, #trainingOptions input {
+    margin: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    text-align: left;
+}
+
+#trainingOptions .input-prefix {
+    pointer-events: none;
+    display: inline-block;
+    border-radius: 8px 0px 0px 8px;
+    color: #555;
+    background-color: #eee;
+    text-align: right;
+    margin: 10px;
+    padding: 10px;
+    margin-right: 0;
+    padding-right: 5px;
+    border: 1px solid #ccc;
+    border-right: 0;
+    font-size: medium;
+}
+
+#trainingOptions .input-after-prefix {
+    border-radius: 0px 8px 8px 0px;
+    margin: 10px;
+    padding: 10px;
+    margin-left: 0;
+    padding-left: 5px;
+    border: 1px solid #ccc;
+    border-left: 0;
+    font-size: medium;
+}
+
+#trainingPercentDiv {
+    margin-right: 0;
+    padding-right: 0;
+}
+
+#trainingPercentInput {
+    width: 60px;
+    font-weight: bold;
+    font-size: medium;
+    border: 1px solid #ccc;
+}
+
+#trainingPercentInputSuffix {
+    margin-left: -3.3em;
+    font-weight: bold;
+    font-size: medium;
+}
+
+.inline-div {
+    display: inline-table;
+}
+
+.param-card {
+    display: inline-table;
+    margin: 10px;
+    padding: 10px;
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+}
+.param-card div .param-data[valid="false"] {
+    border-color: red;
+}
+
+.plus::before {
+    content: "+";
+}
+.plus {
+    cursor: pointer;
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.2);
+    background-color: rgba(0, 255, 0, 0.1);
+}
+
+.rem::before {
+    content: "-";
+}
+.rem {
+    cursor: pointer;
+    float: right;
+    box-shadow: 0 0 15px 1px rgba(255, 0, 0, 0.2);
+    width: 20px;
+    height: 20px;
+    text-align: center;
+    background-color: rgba(255, 0, 0, 0.1);
+}
+
+.group-card {
+    cursor: pointer;
+    display: inline-table;
+    margin: 10px;
+    padding: 10px;
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.4);
+    border-radius: 8px;
+    text-align: center;
+}
+
+.group-card:hover {
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.8);
+}
+
+.group-card[selected="selected"], .group-card:active {
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.8);
+    background-color: rgba(0, 255, 0, 0.1);
+}
+
+.param-buttons-container {
+    text-align: center;
+}
+
+.param-button {
+    cursor: pointer;
+    display: inline-table;
+    margin: 5px 5px 5px 0;
+    padding: 5px;
+    text-align: center;
+    font-weight: bold;
+    background-color: #eee;
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 0.8);
+    min-width: fit-content;
+    border: 1px solid grey;
+}
+
+.param-button:hover {
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 1);
+}
+
+.param-button[selected="selected"], .param-button:active {
+    box-shadow: 0 0 15px 1px rgba(0, 0, 0, 1);
+    background-color: rgba(0, 255, 0, 0.1);
+}
