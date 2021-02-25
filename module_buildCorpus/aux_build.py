@@ -9,15 +9,13 @@ from gensim.parsing.preprocessing import STOPWORDS as GENSIM_STOPWORDS
 
 # folders and filenames involved in corpus construction
 
-
-
 # initial text for corpus building
 INITIAL_TEXT = 'initialText.txt'
 
-CORPUS_FOLDER = os.getenv('HOME') + "/CloudStation/KORPUS/"
+CORPUS_FOLDER = os.getenv('HOME') + "/KORPUS/"
 
 MODELS_FOLDER = CORPUS_FOLDER+"MODELS/"
-LEE_D2V_MODEL = MODELS_FOLDER+"d2v_lee.without_stopwords.model"
+# LEE_D2V_MODEL = MODELS_FOLDER+"d2v_lee.without_stopwords.model"
 AP_D2V_MODEL = MODELS_FOLDER+"doc2vec.bin"
 
 # these are the files and folders created in the building of corpus
@@ -47,7 +45,7 @@ def SortTuplaList_byPosInTupla(tuplaList, pos):
 	return
 
 
-# variable and function to control if program must pause after each phase (change to True if argument -s)
+# variable and function to control if program must pause after each phase (only for debugging change to True if argument -s)
 FSTOP = False
 def Stop():
 	if FSTOP == True:
@@ -154,16 +152,7 @@ def processCentury(cad):
 # to get the relevant components of a wikicat
 def getWikicatComponents (wikicat):
 	components = separateWikicatComponents(wikicat)   # get all the components
-
 	components_filtered = list(filter(isNotNLTKStopWord, components))  # remove NLTK stopwords
-	# components_filtered2 = list(filter(isNotGensimStopWord, components))  # remove Gensim stopwords
-	#
-	# if Counter(components_filtered) != Counter(components_filtered2):
-	# 	print("Diferencias en las listas")
-	# 	print(components_filtered)
-	# 	print(components_filtered2)
-	# 	input("continuar")
-
 	return components_filtered
 
 
