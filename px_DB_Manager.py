@@ -1,6 +1,6 @@
+import requests
 from requests_futures.sessions import FuturesSession
-from px_aux import URL_DB as _URL_DB, Print as _Print
-
+from px_aux import URL_DB as _URL_DB, Print as _Print, URL_DB_SL_annotate as _URL_DB_SL_annotate
 
 # to get wikicats and subjects from a text
 # receives: the text
@@ -9,8 +9,6 @@ from px_aux import URL_DB as _URL_DB, Print as _Print
 #    result['wikicats'] with a list of wikicats (strings)
 #    result['subjects'] with a list of subjects (strings)
 def getCategoriesInText(texto):
-	import requests
-	from px_aux import URL_DB_SL_annotate as _URL_DB_SL_annotate
 
 	result = {}
 
@@ -46,8 +44,6 @@ def getCategoriesInText(texto):
 		print("Warning getCategoriesInText(): No entities in text")
 
 	print("\nInitially, there are entities:", len(entities))
-	for entity in entities:
-		_Print(entity["@URI"])
 
 	# filter duplicated entities (same entity identified in different parts of the text)
 	uniqueEntities = []
@@ -72,13 +68,21 @@ def getCategoriesInText(texto):
 		for ej in entities:
 			if entity["@URI"] == ej["@URI"]:
 				continue
-
 			wkic.extend(ej["wikicats"])
+
+		print("\n\n", entity["@URI"], "-->", end=' ')
+		for x in wki:
+			print(x, end=' ')
+		print("")
+
 		intersec = set(wkic).intersection(wki) # is there intersection?
 		if len(intersec) > 0:
 			rightEntities.append(entity)
+			print("Intersection", "-->", end=' ')
+			for x in intersec:
+				print(x, end=' ')
 		else:
-			_Print("Discarded entity: ", entity["@URI"])
+			_Print("No intersection. Discarded entity: ", entity["@URI"])
 
 	entities = rightEntities
 

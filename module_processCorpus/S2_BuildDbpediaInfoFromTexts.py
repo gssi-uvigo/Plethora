@@ -85,7 +85,7 @@ def processS2File(source, confidence=0.5, support=1):
 		print(message)
 		raise Exception(message)
 
-	_Print("Processing file "+source+"...\n")
+	_Print("processS2File: Processing file "+source+"...\n")
 	try:
 		entities = findEntities(source, confidence, support)
 		pickle.dump(entities, open(source+".p", "wb" ))

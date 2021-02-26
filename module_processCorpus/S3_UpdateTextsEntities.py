@@ -185,16 +185,19 @@ def rebuild (byOffset):
 # source.s.w.p and source.w.p.html are also created
 def processS3File(source):
 	if not source.endswith(".s"):
-		print("processS3File:", source+" has not '.s' extension")
-		return -1
+		message = "processS3File: "+source+" has not '.s' extension"
+		print(message)
+		raise Exception(message)
 
 	if not os.path.exists(source):
-		print("processS3File:", source, "not found!")
-		return -1
+		message = "processS3File: "+source+" not found!"
+		print(message)
+		raise Exception(message)
 
 	if not os.path.exists(source+".p"):
-		print("processS3File:", source+".p", "not found!")
-		return -1
+		message = "processS3File: "+source+".p not found!"
+		print(message)
+		raise Exception(message)
 
 	print("Processing file "+source+"...\n")
 	result = getContentAfterChanges(source, source+".p")

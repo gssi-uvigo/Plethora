@@ -127,10 +127,14 @@ def doPh1 (P0_originalText):
 			print("No need to do Processing S2...")
 		else:
 			print("***** Processing S2...")
-			_processS2File(filename_txt+".s")  # creates .p file
+			_processS2File(sfilename)  # creates .p file
 
-		print("\n\n***** Processing S3...")
-		_processS3File(filename_txt+".s")  # creates .w file
+		wfilename = sfilename+".w"
+		if os.path.exists(wfilename) and _moreRecent(wfilename, sfilename):
+			print("No need to do Processing S3...")
+		else:
+			print("***** Processing S3...")
+			_processS3File(sfilename)  # creates .w file
 
 	except Exception as e:
 		result["error"] = str(e)
@@ -139,9 +143,9 @@ def doPh1 (P0_originalText):
 		return result
 
 
-	filename_wk = lengthFolder+str(lenOriginalText)+".ph1.txt.wk"   # filename for wikicats (length.ph1.wk)
-	filename_sb = lengthFolder+str(lenOriginalText)+".ph1.txt.sb"   # filename for subjects (length.ph1.sb)
-	filename_en = lengthFolder+str(lenOriginalText)+".ph1.txt.en"   # filename for entities (length.ph1.en)
+	filename_wk = filename_txt+".wk"   # filename for wikicats (length.ph1.wk)
+	filename_sb = filename_txt+".sb"   # filename for subjects (length.ph1.sb)
+	filename_en = filename_txt+".en"   # filename for entities (length.ph1.en)
 
 	try:  # open wikicats file if exists and it is newer than original text file
 		if os.path.exists(filename_wk) and _moreRecent(filename_wk, filename_txt):
