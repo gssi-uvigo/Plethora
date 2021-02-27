@@ -14,7 +14,7 @@ from aux_build import getWikicatComponents as _getWikicatComponents
 from aux_build import getSubjectComponents as _getSubjectComponents, filterSimpleWikicats as _filterSimpleWikicats
 
 from px_DB_Manager import getCategoriesInText as _getCategoriesInText
-from px_aux import Print as _Print, saveFile as _saveFile,  appendFile as _appendFile
+from px_aux import Print as _Print, saveFile as _saveFile,  log as _log
 
 from gensim.models.doc2vec import Doc2Vec
 from gensim.parsing.preprocessing import remove_stopwords
@@ -185,7 +185,7 @@ class textSimilarityFunctions():
 				candidate_text_wikicats = fp.read().splitlines()
 		except Exception as e:
 			_Print("Candidate wikicats file not found in local DB:", fileNameCandidateWikicats)
-			_appendFile(self.logFilename, "ERROR sharedWikicatsJaccardSimilarity(): Candidate ikicats file not found: "+fileNameCandidateWikicats+" "+str(e))
+			_log(self.logFilename, "ERROR sharedWikicatsJaccardSimilarity(): Candidate ikicats file not found: "+fileNameCandidateWikicats+" "+str(e))
 			return -1
 
 		if len(candidate_text_wikicats) == 0:
@@ -227,12 +227,12 @@ class textSimilarityFunctions():
 			wikicats_jaccard_similarity = sum_sims / numContributions
 		except Exception as e:
 			_Print("ERROR sharedWikicatsJaccardSimilarity(): Exception while computing Jaccard wikicats similarity: "+str(e))
-			_appendFile(self.logFilename, "ERROR sharedWikicatsJaccardSimilarity(): Exception while computing Jaccard wikicats similarity: "+str(e))
+			_log(self.logFilename, "ERROR sharedWikicatsJaccardSimilarity(): Exception while computing Jaccard wikicats similarity: "+str(e))
 			return -1
 
 		if wikicats_jaccard_similarity > 1:
 			_Print("Candidate with wikicats similarity > 1:", fileNameCandidateWikicats, sum_sims, denominator, wikicats_jaccard_similarity)
-			_appendFile(self.logFilename, "ERROR sharedWikicatsJaccardSimilarity(): similarity > 1")
+			_log(self.logFilename, "ERROR sharedWikicatsJaccardSimilarity(): similarity > 1")
 			return -1
 
 		return wikicats_jaccard_similarity
@@ -250,7 +250,7 @@ class textSimilarityFunctions():
 				candidate_text_subjects = fp.read().splitlines()
 		except Exception as e:
 			_Print("Candidate subjects file not found in local DB:", fileNameCandidateSubjects)
-			_appendFile(self.logFilename, "ERROR sharedSubjectsJaccardSimilarity(): Candidate subjects file not found: "+fileNameCandidateSubjects+" "+str(e))
+			_log(self.logFilename, "ERROR sharedSubjectsJaccardSimilarity(): Candidate subjects file not found: "+fileNameCandidateSubjects+" "+str(e))
 			return -1
 
 		if len(candidate_text_subjects) == 0:
@@ -293,12 +293,12 @@ class textSimilarityFunctions():
 					subjects_jaccard_similarity = sum_sims / numContributions
 		except Exception as e:
 			_Print("ERROR sharedSubjectsJaccardSimilarity(): Exception while computing Jaccard subjects similarity: "+str(e))
-			_appendFile(self.logFilename, "ERROR sharedSubjectsJaccardSimilarity(): Exception while computing Jaccard subjects similarity: "+str(e))
+			_log(self.logFilename, "ERROR sharedSubjectsJaccardSimilarity(): Exception while computing Jaccard subjects similarity: "+str(e))
 			return -1
 
 		if subjects_jaccard_similarity > 1:
 			_Print("Candidate with subjects similarity > 1:", fileNameCandidateSubjects, sum_sims, denominator, subjects_jaccard_similarity)
-			_appendFile(self.logFilename, "ERROR sharedSubjectsJaccardSimilarity(): similarity > 1")
+			_log(self.logFilename, "ERROR sharedSubjectsJaccardSimilarity(): similarity > 1")
 			return -1
 
 		return subjects_jaccard_similarity
@@ -318,7 +318,7 @@ class textSimilarityFunctions():
 				candidate_text_wikicats = fp.read().splitlines()
 		except Exception as e:
 			_Print("Candidate wikicats file not found in local DB:", fileNameCandidateWikicats)
-			_appendFile(self.logFilename, "ERROR fullWikicatsJaccardSimilarity(): Candidate wikicats file not found: "+fileNameCandidateWikicats+" "+str(e))
+			_log(self.logFilename, "ERROR fullWikicatsJaccardSimilarity(): Candidate wikicats file not found: "+fileNameCandidateWikicats+" "+str(e))
 			return -1
 
 		if len(self.original_text_wikicats) == 0 or len(candidate_text_wikicats) == 0:
@@ -340,7 +340,7 @@ class textSimilarityFunctions():
 				candidate_text_subjects = fp.read().splitlines()
 		except Exception as e:
 			_Print("Candidate subjects file not found in local DB:", fileNameCandidateSubjects)
-			_appendFile(self.logFilename, "ERROR fullSubjectsJaccardSimilarity(): Candidate subjects file not found: "+fileNameCandidateSubjects+" "+str(e))
+			_log(self.logFilename, "ERROR fullSubjectsJaccardSimilarity(): Candidate subjects file not found: "+fileNameCandidateSubjects+" "+str(e))
 			return -1
 
 		if len(self.original_text_subjects) == 0 or len(candidate_text_subjects) == 0:

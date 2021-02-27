@@ -1,18 +1,22 @@
 # this is the main program of the corpus builder tool
-# it can be launched standalone, using a Flask server started here and calling localhost:5000/corpus
-# or from the main tool with its Flask server, selecting the corresponding option
+# it can be launched standalone, using a Flask server started here and calling localhost:5060/corpus
 
-# argument '-d' makes button labels in the interface to show calls (routes) associated in the server,
-# to be easier to understand the flow among interface and python server modules
+# Arguments:
+# '-l' makes button labels in the interface to show calls (routes) associated in the server,
+#      to be easier to understand the flow among interface and python server modules (only for developers)
+# '-m' prints abundant log messages in running console
+# '-s' forces stop after every phase waiting for 'ENTER'
+# '-g' writes debugging messages in log
 
-# it depends on px_DB_Manager and px_aux modules of the main tool, as well as the
+
+# it depends on px_DB_Manager and px_aux files of the main tool, as well as the 'processCorpus' and 'train' modules
 
 import sys
+import os
 from smart_open import open as _Open
 
-# this program has been launched in the Plethora/buildCorpus folder
-# this is to search px_DB_Manager and px_aux in the Plethora folder
-# such modules are not needed here, but in routesCorpus and routesCorpus2 modules loaded next
+# this program has been launched in the Plethora/module_buildCorpus folder
+# next line is to search px_DB_Manager and px_aux in the Plethora main folder
 sys.path.append('../')
 
 # functions to be executed when Flask requests are received
@@ -24,23 +28,23 @@ from aux_build import INITIAL_TEXT as _INITIAL_TEXT
 import aux_build
 import px_aux
 
+TEMPLATES_FOLDER = '../templates'
 
 # load the initial text shown at the beginning of the interface
 initialTextFile = _Open(_INITIAL_TEXT, "r")
 initialText = initialTextFile.read()
 
-FLAB = False	# to control if buttons must show additional label details (change to True if argument -l)
+FLAG_LAB = False	# to control if buttons must show additional label details (changed to True if argument -l)
 
-# the following is only executed if this is the main program, that is, if we launch the corpus tool directly from the 'buildCorpus' folder
+# the following is only executed if this is the main program, that is, if we launch the corpus tool directly from the 'module_buildCorpus' folder
 # not executed if we launch the corpus tool from the main tool, as the 'app' object is already available from the main tool
 if __name__ == '__main__':
-	import os
 
 	# Flask is a module to launch a web server. It permits to map a function for each request template
 	from flask import Flask, render_template, request, flash, json, jsonify, redirect, url_for, send_from_directory
 
 	# templates dir is shared with the main tool because it is possible for this tool to be called from the main one
-	template_dir = os.path.abspath('../templates')
+	template_dir = os.path.abspath(TEMPLATES_FOLDER)
 	# Create the Flask app to manage the HTTP request
 	app = Flask(__name__, template_folder=template_dir)
 
@@ -55,13 +59,16 @@ if __name__ == '__main__':
 			continue
 
 		if sys.argv[argument] == "-l":   # argument '-l' prints button labels with routes associated
-			FLAB = True
+			FLAG_LAB = True
 			print("Flag labels activated!!!")
-		if sys.argv[argument] == "-s":   # argument '-s' forces stop after every phase
-			aux_build.FSTOP = True
+		if sys.argv[argument] == "-s":   # argument '-s' forces stop after every phase waiting for 'ENTER'
+			aux_build.FLAG_STOP = True
 			print("Flag stop activated!!!")
-		if sys.argv[argument] == "-m":   # argument '-m' print enhanced log messages
-			px_aux.FMES = True
+		if sys.argv[argument] == "-m":   # argument '-m' print debugging messages in console
+			px_aux.FLAG_MES = True
+			print("Flag messages activated!!!")
+		if sys.argv[argument] == "-g":   # argument '-g' print log messages in file
+			px_aux.FLAG_LOG = True
 			print("Flag messages activated!!!")
 
 # Flask routes binding for interface requests (not done in the main tool, so always necessary)
@@ -77,12 +84,12 @@ app.add_url_rule("/getWikicatUrls", "getWikicatUrls", _getWikicatUrls, methods=[
 # this is the main entry point of the corpus builder tool (not done in the main tool, so always necessary)
 @app.route('/corpus',  methods=["GET", "POST"])
 def hello_world():
-	return render_template('./template_corpus.html', parDefaultText=initialText, parDebug=FLAB) # parDebug=True prints button labels with routes associated
+	return render_template('./template_corpus.html', parDefaultText=initialText, parDebug=FLAG_LAB) # parDebug=True prints button labels with routes associated
 
 
 # start web server listening port 5060 by default if we have launched the corpus tool standalone
 
-# the following is only executed if this is the main program, that is, if we launch the corpus tool directly from the 'buildCorpus' folder
+# the following is only executed if this is the main program, that is, if we launch the corpus tool directly from the 'module_buildCorpus' folder
 # not executed if we launch the corpus tool from the main tool, as the 'app' object is already available from the main tool
 if __name__ == '__main__':
 	app.run(host='0.0.0.0', port=5060, threaded=True)

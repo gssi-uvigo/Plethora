@@ -7,12 +7,16 @@ import csv
 import statistics
 import random
 
+from numpy import percentile
+from numpy import mean
+from numpy import std
+
 from flask import request, jsonify
 from smart_open import open as _Open
 from requests_futures.sessions import FuturesSession
 
 from px_DB_Manager import getCategoriesInText as _getCategoriesInText
-from px_aux import saveFile as _saveFile, appendFile as _appendFile, URL_DB as _URL_DB, URL_WK as _URL_WK
+from px_aux import saveFile as _saveFile, log as _log, URL_DB as _URL_DB, URL_WK as _URL_WK
 from px_aux import Print as _Print
 
 from aux_build import hasFieldPT as _hasFieldPT, SortTuplaList_byPosInTupla as _SortTuplaList_byPosInTupla
@@ -93,7 +97,7 @@ def doPh1 (P0_originalText):
 
 	# to log messages
 	logFilename = lengthFolder+str(lenOriginalText)+".log"
-	_appendFile(logFilename, "\n\nExecuting Phase 1")
+	_log(logFilename, "\n\nExecuting Phase 1")
 
 	# file to store original text
 	filename_txt = lengthFolder+str(lenOriginalText)+".ph1.txt"   # save the received text with length.ph1.txt filename
@@ -139,7 +143,7 @@ def doPh1 (P0_originalText):
 	except Exception as e:
 		result["error"] = str(e)
 		print("Exception in preprocessing "+filename_txt+" in doPh1:", str(e))
-		_appendFile(logFilename, "Exception in preprocessing "+filename_txt+" in doPh1: "+str(e))
+		_log(logFilename, "Exception in preprocessing "+filename_txt+" in doPh1: "+str(e))
 		return result
 
 
@@ -192,7 +196,7 @@ def doPh1 (P0_originalText):
 
 	result["P1_selectedWikicats"] = wkSelectedList
 
-	_appendFile(logFilename, "Returning wikicats: "+str(len(listWikicats)))
+	_log(logFilename, "Returning wikicats: "+str(len(listWikicats)))
 	return result;
 
 
@@ -246,7 +250,7 @@ def doPh2 (lenOriginalText, P1_selectedWikicats):
 
 	logFilename = lengthFolder+str(lenOriginalText)+".log"
 	print("Executing Phase 2")
-	_appendFile(logFilename, "\n\nExecuting Phase 2")
+	_log(logFilename, "\n\nExecuting Phase 2")
 
 
 
@@ -330,14 +334,14 @@ def doPh2 (lenOriginalText, P1_selectedWikicats):
 	lenListWithoutDuplicates  = len(listWithoutDuplicates)  # length of full list to process
 	print("\n\nSummary of URLs numbers: DB=", numUrlsDB, ", WK= ", numUrlsWK, ", total without duplicates=", lenListWithoutDuplicates)
 
-	_appendFile(logFilename, "Number of unique discovered URLs: "+str(lenListWithoutDuplicates))
+	_log(logFilename, "Number of unique discovered URLs: "+str(lenListWithoutDuplicates))
 
 	# returns number of results, the result items are only the numbers of discovered URLs
 	result["P2_totalDB"] = numUrlsDB
 	result["P2_totalWK"] = numUrlsWK
 	result["P2_totalUrls"] = lenListWithoutDuplicates
 
-	_appendFile(logFilename, "Computed URLs: "+str(lenListWithoutDuplicates))
+	_log(logFilename, "Computed URLs: "+str(lenListWithoutDuplicates))
 	return result
 
 
@@ -452,7 +456,7 @@ def doPh3(lenOriginalText):
 
 	logFilename = lengthFolder+str(lenOriginalText)+".log"
 	print("Executing Phase 3")
-	_appendFile(logFilename, "\n\nExecuting Phase 3")
+	_log(logFilename, "\n\nExecuting Phase 3")
 
 	result = {}  # object to store the results to be returned to the request
 
@@ -555,7 +559,7 @@ def doPh3(lenOriginalText):
 					else:
 						listEnoughContent.append(rFileNameCandidate)
 				except Exception as e:
-					_appendFile(logFilename, "Page "+page+" could not be retrieved: "+repr(e))
+					_log(logFilename, "Page "+page+" could not be retrieved: "+repr(e))
 					unretrieved_pages_list.append(page)
 
 		endTime = datetime.now()
@@ -578,7 +582,7 @@ def doPh3(lenOriginalText):
 
 	lenListEnoughContent = len(listEnoughContent)
 
-	_appendFile(logFilename, "Number of available pages with enough content: "+str(lenListEnoughContent))
+	_log(logFilename, "Number of available pages with enough content: "+str(lenListEnoughContent))
 
 	print("Number of texts with enough content:", str(lenListEnoughContent))
 	print("Number of texts without enough content:", str(len(listNotEnoughContent)))
@@ -586,7 +590,7 @@ def doPh3(lenOriginalText):
 	result["P3_lenListEnoughContent"] = lenListEnoughContent
 	result["P3_lenListNotEnoughContent"] = len(listNotEnoughContent)
 
-	_appendFile(logFilename, "Available pages with content: "+str(lenListEnoughContent))
+	_log(logFilename, "Available pages with content: "+str(lenListEnoughContent))
 	return result
 
 
@@ -648,7 +652,7 @@ def doPh4(lenOriginalText):
 
 	logFilename = lengthFolder+str(lenOriginalText)+".log"
 	print("Executing Phase 4")
-	_appendFile(logFilename, "\n\nExecuting Phase 4")
+	_log(logFilename, "\n\nExecuting Phase 4")
 
 	result = {}  # object to store the results to be returned to the request
 
@@ -708,7 +712,7 @@ def doPh4(lenOriginalText):
 					candidate_text = candidateTextFile.read()
 					_Print("Reading candidate text file:", fileNameCandidate)
 				except:  # file that inexplicably could not be read from local store, it will not be used
-					_appendFile(logFilename, "ERROR doPh4identifyWikicats(): Unavailable candidate file, not in the store, but it should be: "+fileNameCandidate)
+					_log(logFilename, "ERROR doPh4identifyWikicats(): Unavailable candidate file, not in the store, but it should be: "+fileNameCandidate)
 					listWithoutWKSB.append(rFileNameCandidate)
 					continue
 
@@ -716,7 +720,7 @@ def doPh4(lenOriginalText):
 				candidate_text_categories = _getCategoriesInText(candidate_text)  # function _getCategoriesInText from px_DB_Manager
 
 				if ("error" in candidate_text_categories):  # error while fetching info, the page will not be used
-					_appendFile(logFilename, "ERROR doPh4identifyWikicats(): Problem in _getCategoriesInText(candidate_text): "+candidate_text_categories["error"])
+					_log(logFilename, "ERROR doPh4identifyWikicats(): Problem in _getCategoriesInText(candidate_text): "+candidate_text_categories["error"])
 					listWithoutWKSB.append(rFileNameCandidate)
 					continue
 
@@ -746,7 +750,7 @@ def doPh4(lenOriginalText):
 
 	lenListWithWKSB = len(listWithWKSB)
 
-	_appendFile(logFilename, "Number of available pages with wikicats or subjects: "+str(lenListWithWKSB))
+	_log(logFilename, "Number of available pages with wikicats or subjects: "+str(lenListWithWKSB))
 
 	print("Number of docs with wikicats or subjects:", str(lenListWithWKSB))
 	print("Number of docs without wikicats nor subjects:", str(len(listWithoutWKSB)))
@@ -756,7 +760,7 @@ def doPh4(lenOriginalText):
 	result["P4_lenListWithWKSB"] = lenListWithWKSB
 	result["P4_lenListWithoutWKSB"] = len(listWithoutWKSB)
 
-	_appendFile(logFilename, "Available pages with wikicats: "+str(lenListWithWKSB))
+	_log(logFilename, "Available pages with wikicats: "+str(lenListWithWKSB))
 	return result
 
 
@@ -828,7 +832,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 
 	logFilename = lengthFolder+str(lenOriginalText)+".log"
 	print("Executing Phase 5")
-	_appendFile(logFilename, "\n\nExecuting Phase 5")
+	_log(logFilename, "\n\nExecuting Phase 5")
 
 	result = {}  # object to store the results to be returned to the request
 
@@ -852,7 +856,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 	except:
 		listSubjectsOriginalText = []    # no subjects for original text
 		print("Subjects file not available: "+filename_sb)
-		_appendFile(logFilename, "Subjects file not available: "+filename_sb)
+		_log(logFilename, "Subjects file not available: "+filename_sb)
 
 
 
@@ -925,7 +929,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 			changes = True  # to mark that new data has been computed and the results file should be updated
 
 			_Print(idx, ". Sims not in local DB:", str(e))
-			_appendFile(logFilename, "Sims not in local DB:"+str(e))
+			_log(logFilename, "Sims not in local DB:"+str(e))
 
 			# Measure the full wikicats jaccard similarity
 			_Print("Computing full wikicats jaccard similarity for", rFileNameCandidate)
@@ -948,7 +952,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 			# shared_wikicats_jaccard_sim = similarities.sharedWikicatsJaccardSimilarity(fileNameCandidateWikicats)
 			# if shared_wikicats_jaccard_sim < 0:
 			# 	_Print("ERROR computing sharedWikicatsJaccard ("+str(shared_wikicats_jaccard_sim)+"):", fileNameCandidateWikicats)
-			# 	_appendFile(logFilename, "ERROR computing sharedWikicatsJaccard: "+fileNameCandidateWikicats)
+			# 	_log(logFilename, "ERROR computing sharedWikicatsJaccard: "+fileNameCandidateWikicats)
 			# 	continue
 			#
 			# # Measure shared subjects jaccard similarity (requires shared matching). Code -1 is returned if some error
@@ -956,7 +960,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 			# shared_subjects_jaccard_sim = similarities.sharedSubjectsJaccardSimilarity(fileNameCandidateSubjects)
 			# if shared_subjects_jaccard_sim < 0:
 			# 	_Print("ERROR computing sharedSubjectsJaccard ("+str(shared_subjects_jaccard_sim)+"):", fileNameCandidateSubjects)
-			# 	_appendFile(logFilename, "ERROR computing sharedSubjectsJaccard: "+fileNameCandidateSubjects)
+			# 	_log(logFilename, "ERROR computing sharedSubjectsJaccard: "+fileNameCandidateSubjects)
 			# 	continue
 
 			# Measure the Doc2Vec (Lee) distance
@@ -996,7 +1000,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 					writer.writerow([key, sims[0], sims[1], sims[2], sims[3] ])
 				except Exception as e:
 					print("Error writing csv with similarities ("+str(e)+"):", row)
-					_appendFile(logFilename, "Error writing csv with similarities  ("+str(e)+"):"+str(row))
+					_log(logFilename, "Error writing csv with similarities  ("+str(e)+"):"+str(row))
 
 			csvFile.close()
 
@@ -1018,7 +1022,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 	except:
 		listEntityFilesOriginalText = []    # no entities for original text
 		print("Entities file not available: "+filename_en)
-		_appendFile(logFilename, "Entities file not available: "+filename_en)
+		_log(logFilename, "Entities file not available: "+filename_en)
 		result["error"] = "doPh5 ERROR: Entities file not available: "+filename_en
 		return result
 
@@ -1037,9 +1041,6 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 	# ratings[sim]["average"]
 
 	def checkOutliar(lista):
-		from numpy import percentile
-		from numpy import mean
-		from numpy import std
 
 		outliar=False
 		# identify IRM outliers
@@ -1133,7 +1134,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 				writer.writerow([key, E0entitiesPositions[key][0], E0entitiesPositions[key][1],  E0entitiesPositions[key][2], E0entitiesPositions[key][3] ])
 			except:
 				print("Error writing csv with entities E0 positions", row)
-				_appendFile(logFilename, "Error writing csv with entities E0 positions"+str(row))
+				_log(logFilename, "Error writing csv with entities E0 positions"+str(row))
 
 		csvFile.close()
 
@@ -1182,7 +1183,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 				writer.writerow([row[0], row[1]])   # store (doc, sim)
 			except:
 				print("Error writing csv with sims for best similarity", row)
-				_appendFile(logFilename, "Error writing csv with sims for best similarity"+str(row))
+				_log(logFilename, "Error writing csv with sims for best similarity"+str(row))
 
 		csvFile.close()
 
@@ -1190,7 +1191,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 
 	result["P5_elapsedTimeF5"] = elapsedTimeF5.seconds
 
-	_appendFile(logFilename, "Used sim: "+nameBestRating)
+	_log(logFilename, "Used sim: "+nameBestRating)
 	return result
 
 
@@ -1292,7 +1293,7 @@ def doPh6(lenOriginalText, pctgesList):
 
 	logFilename = lengthFolder+str(lenOriginalText)+".log"
 	print("Executing Phase 6")
-	_appendFile(logFilename, "\n\nExecuting Phase 6")
+	_log(logFilename, "\n\nExecuting Phase 6")
 
 	result = {}  # object to store the results to be returned to the request
 
@@ -1316,7 +1317,7 @@ def doPh6(lenOriginalText, pctgesList):
 		print("Exception: "+str(ex))
 		print("No sims file with the whole set of candidate texts and the ratings of the best similarity: "+listDocsBestSimFile)
 		result["error"] = "No sims file with the whole set of candidate texts and the ratings of the bestsimilarity:"+listDocsBestSimFile
-		_appendFile(logFilename, "No sims file with the whole set of candidate texts and the ratings of the best similarity: "+listDocsBestSimFile)
+		_log(logFilename, "No sims file with the whole set of candidate texts and the ratings of the best similarity: "+listDocsBestSimFile)
 		return result
 
 	# listDocs are .txt files ordered by best AP sim
@@ -1365,7 +1366,7 @@ def doPh6(lenOriginalText, pctgesList):
 		except Exception as e:
 			result["error"] = str(e)
 			print("Exception in preprocessing "+modelFilename+" in doPh6:", str(e))
-			_appendFile(logFilename, "Exception in preprocessing "+modelFilename+" in doPh6: "+str(e))
+			_log(logFilename, "Exception in preprocessing "+modelFilename+" in doPh6: "+str(e))
 			return result
 
 		if (np1 > 0):
@@ -1422,15 +1423,15 @@ def doPh6(lenOriginalText, pctgesList):
 			except Exception as e:
 				result["error"] = str(e)
 				print("Exception in training "+modelFilename+" in doPh6:", str(e))
-				_appendFile(logFilename, "Exception in training "+modelFilename+" in doPh6: "+str(e))
+				_log(logFilename, "Exception in training "+modelFilename+" in doPh6: "+str(e))
 				return result
 
 			if (r == 0):
 				print("Training success for "+modelFilename+"!!")
-				_appendFile(logFilename, "Computed model: "+modelFilename)
+				_log(logFilename, "Computed model: "+modelFilename)
 			else:
 				print("Training failed for "+modelFilename+"!")
-				_appendFile(logFilename, "Training failed: "+modelFilename)
+				_log(logFilename, "Training failed: "+modelFilename)
 
 			# the current model has been created, let's check its quality
 
@@ -1597,7 +1598,7 @@ def doPh7(P0_originalText, modelNumberList):
 	# logging
 	logFilename = lengthFolder+str(lenOriginalText)+".log"
 	print("Executing Phase 7", flush=True)
-	_appendFile(logFilename, "\n\nExecuting Phase 7")
+	_log(logFilename, "\n\nExecuting Phase 7")
 
 	modelTargetNumber = modelNumberList[0] # let's study only one, the first one, currently 2
 
@@ -1616,7 +1617,7 @@ def doPh7(P0_originalText, modelNumberList):
 	except:
 		listEntityFilesOriginalText = []    # no entities for original text
 		print("Entities file not available: "+filename_en)
-		_appendFile(logFilename, "Entities file not available: "+filename_en)
+		_log(logFilename, "Entities file not available: "+filename_en)
 		result["error"] = "doPh7 ERROR: E0 Entities file not available: "+filename_en
 		return result
 
@@ -1714,10 +1715,10 @@ def doPh7(P0_originalText, modelNumberList):
 
 			if (r == 0):
 				print("Training success for "+modelFilename+"!!")
-				_appendFile(logFilename, "Computed model: "+modelFilename)
+				_log(logFilename, "Computed model: "+modelFilename)
 			else:
 				print("Training failed for "+modelFilename+"!")
-				_appendFile(logFilename, "Training failed: "+modelFilename)
+				_log(logFilename, "Training failed: "+modelFilename)
 				result["error"] = "doPh7 ERROR: error training: "+modelFilename
 				return result
 		else:
@@ -1748,7 +1749,7 @@ def doPh7b(P0_originalText, modelNumberList):
 	# logging
 	logFilename = lengthFolder+str(lenOriginalText)+".log"
 	print("Executing Phase 7b", flush=True)
-	_appendFile(logFilename, "\n\nExecuting Phase 7")
+	_log(logFilename, "\n\nExecuting Phase 7")
 
 	modelTargetNumber = modelNumberList[0] # let's study only one, the first one, currently 2
 
@@ -1781,7 +1782,7 @@ def doPh7b(P0_originalText, modelNumberList):
 	except:
 		listEntityFilesOriginalText = []    # no entities for original text
 		print("Entities file not available: "+filename_en)
-		_appendFile(logFilename, "Entities file not available: "+filename_en)
+		_log(logFilename, "Entities file not available: "+filename_en)
 		result["error"] = "doPh7 ERROR: E0 Entities file not available: "+filename_en
 		return result
 
@@ -1886,10 +1887,10 @@ def doPh7b(P0_originalText, modelNumberList):
 
 			if (r == 0):
 				print("Training success for "+modelFilename+"!!")
-				_appendFile(logFilename, "Computed model: "+modelFilename)
+				_log(logFilename, "Computed model: "+modelFilename)
 			else:
 				print("Training failed for "+modelFilename+"!")
-				_appendFile(logFilename, "Training failed: "+modelFilename)
+				_log(logFilename, "Training failed: "+modelFilename)
 				result["error"] = "doPh7 ERROR: error training: "+modelFilename
 				return result
 		else:
@@ -2110,7 +2111,7 @@ def getUrlsLinked2Wikicats (P1_selectedWikicats, logFilename):
 				requestDone = 1
 			except Exception as exc:
 				print("*** ERROR getUrlsLinked2Wikicats(): Error starting DB query for", wikicat, ":", exc)
-				_appendFile(logFilename, "ERROR getUrlsLinked2Wikicats(): Error starting DB query for "+wikicat+": "+repr(exc))
+				_log(logFilename, "ERROR getUrlsLinked2Wikicats(): Error starting DB query for "+wikicat+": "+repr(exc))
 				requestDB = None
 
 			requestObjects[wikicat] = {"db": requestDB}  # store the request DB object for this wikicat, None if some error
@@ -2156,7 +2157,7 @@ def getUrlsLinked2Wikicats (P1_selectedWikicats, logFilename):
 				requestDone = 1
 			except Exception as exc:
 				print("\n*** ERROR getUrlsLinked2Wikicats(): Error starting WK query for", wcs_string, ":", exc)
-				_appendFile(logFilename, "ERROR getUrlsLinked2Wikicats(): Error starting WK query for "+wcs_string+": "+repr(exc))
+				_log(logFilename, "ERROR getUrlsLinked2Wikicats(): Error starting WK query for "+wcs_string+": "+repr(exc))
 				requestWK = None
 
 			requestObjects[wikicat].update({"wk": requestWK})  # store the request WK object for this wikicat
@@ -2217,11 +2218,11 @@ def getUrlsLinked2Wikicats (P1_selectedWikicats, logFilename):
 						_saveFile(_URLs_FOLDER+"_Wikicat_"+wikicat+"_DB_Urls.txt", '\n'.join(urlsDB))  # save all results from DB for this wikicat
 					else:
 						print("*** getUrlsLinked2Wikicats(): ", wikicat," provided 0 DB URLs from "+str(len(bindingsDB))+" results")
-						_appendFile(logFilename, "getUrlsLinked2Wikicats(): "+wikicat+" provided 0 DB URLs from "+str(len(bindingsDB))+" results")
+						_log(logFilename, "getUrlsLinked2Wikicats(): "+wikicat+" provided 0 DB URLs from "+str(len(bindingsDB))+" results")
 
 				except Exception as exc:
 					print("*** ERROR getUrlsLinked2Wikicats(): Error querying DB for", wikicat,":", exc)
-					_appendFile(logFilename, "ERROR getUrlsLinked2Wikicats(): Error querying DB for "+wikicat+": "+repr(exc))
+					_log(logFilename, "ERROR getUrlsLinked2Wikicats(): Error querying DB for "+wikicat+": "+repr(exc))
 					urlsDB = []
 
 		# end for DB, we already have urlsDB
@@ -2270,11 +2271,11 @@ def getUrlsLinked2Wikicats (P1_selectedWikicats, logFilename):
 						_saveFile(_URLs_FOLDER+"_Wikicat_"+wikicat+"_WK_Urls.txt", '\n'.join(urlsWK)) # save all results from WK for this wikicat
 					else:
 						print("*** getUrlsLinked2Wikicats(): ", wikicat," provided 0 WK URLs")
-						_appendFile(logFilename, "getUrlsLinked2Wikicats(): "+wikicat+" provided 0 WK URLs")
+						_log(logFilename, "getUrlsLinked2Wikicats(): "+wikicat+" provided 0 WK URLs")
 
 				except Exception as exc:
 					print("*** ERROR getUrlsLinked2Wikicats(): Error querying WK for", wcs_string,":", exc)
-					_appendFile(logFilename, "ERROR getUrlsLinked2Wikicats(): Error querying WK for "+wcs_string+": "+repr(exc))
+					_log(logFilename, "ERROR getUrlsLinked2Wikicats(): Error querying WK for "+wcs_string+": "+repr(exc))
 					urlsWK = []
 
 		# end for WK, we already have urlsWK

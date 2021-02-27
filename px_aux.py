@@ -1,6 +1,5 @@
 import os
 import pickle
-from pycorenlp import StanfordCoreNLP
 from smart_open import open as _Open
 from datetime import datetime
 
@@ -67,9 +66,9 @@ SCRIPT_STEP2 = "./module_processCorpus/S2.py"
 SCRIPT_STEP3 = "./module_processCorpus/S3.py"
 
 # variable and function to control if program must print log messages (change to True if argument -m)
-FMES = False
+FLAG_MES = False
 def Print (*args):
-	if FMES == True:
+	if FLAG_MES == True:
 		lista = list(map(lambda x: str(x), args))
 		print(" ".join(lista))
 	return
@@ -81,11 +80,13 @@ def saveFile (f, content):
 	out.close()
 	return
 
-def appendFile(f, line):
-	d = str(datetime.now())
-	fd = _Open(f, "a")
-	fd.write(d+": "+line+"\n")
-	fd.close()
+FLAG_LOG = False
+def log(f, line):
+	if (FLAG_LOG):
+		d = str(datetime.now())
+		fd = _Open(f, "a")
+		fd.write(d+": "+line+"\n")
+		fd.close()
 
 
 

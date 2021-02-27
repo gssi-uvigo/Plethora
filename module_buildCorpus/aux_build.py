@@ -46,9 +46,9 @@ def SortTuplaList_byPosInTupla(tuplaList, pos):
 
 
 # variable and function to control if program must pause after each phase (only for debugging change to True if argument -s)
-FSTOP = False
+FlAG_STOP = False
 def Stop():
-	if FSTOP == True:
+	if FlAG_STOP == True:
 		input("\nType ENTER to continue...")
 	return
 

@@ -1,4 +1,5 @@
 This is the tool to build the ad hoc corpus.
+Please, read the README.md file in root folder for requirements about python packages
 
 It depends on the following modules of the main tool: px_aux, px_DB_Manager
 
@@ -22,8 +23,8 @@ It uses D2V for assessing similarity, with a model pretrained with a generic cor
 
 - This software uses the DBpedia SpotLight (endpoint indicated in ../ps_aux.py, that could be:
 
-1. Well-known DBpedia Spotlight endpoint
+1. Well-known DBpedia Spotlight endpoint (not always available)
 URL_DB_SL_annotate = "http://model.dbpedia-spotlight.org/en/annotate"
 
-2. Our copy of DBpedia SpotLight. For example, running in gssi.det.uvigo.es
+2. Our copy of DBpedia SpotLight (default), running in gssi.det.uvigo.es
 URL_DB_SL_annotate = "http://gssi.det.uvigo.es:2222/rest/annotate"

@@ -60,58 +60,94 @@ def getCategoriesInText(texto):
 
 	# filter entities probably erroneously identified
 	# a right entity is required to share wikicats with some other entity in the set
-	_Print("\nFiltering by wikicats sharing")
-	rightEntities = []
+	_Print("\nFiltering by wikicats/subject sharing\n")
+	acceptedEntities = []
+
+
 	for entity in entities:
-		wki = entity["wikicats"]	# wikicats of this entity
-		wkic = []	# wikicats of all the entities in the set except this one
-		for ej in entities:
+		aceptado=False
+		rawTypes = entity["rawSparqlTypes"]
+		if "Person" in rawTypes:
+			acceptedEntities.append(entity)
+			print("Incluido por ser una persona: ", entity["@URI"])
+			continue
+
+		num_other_entities = 0
+
+		for ej in entities: # run over all of them
 			if entity["@URI"] == ej["@URI"]:
-				continue
-			wkic.extend(ej["wikicats"])
+				continue # skip the current one
+			intersecWK = set(ej["wikicats"]).intersection(entity["wikicats"])
+			intersecSB = set(ej["subjects"]).intersection(entity["subjects"])
+			if (len(intersecWK) > 1) or (len(intersecSB) > 1):
+				num_other_entities += 1
+			if num_other_entities == 2:
+				acceptedEntities.append(entity)
+				aceptado = True
+				break
+		if (aceptado == False):
+			print("\nNo aceptado: ", entity["@URI"])
+			print("Wikicats: ", *entity["wikicats"])
+			print("Subjects: ", *entity["subjects"])
+			print("rawTypes: ", entity["rawSparqlTypes"])
 
-		print("\n\n", entity["@URI"], "-->", end=' ')
-		for x in wki:
-			print(x, end=' ')
-		print("")
+	# for entity in entities:
+	# 	wki = entity["wikicats"]	# wikicats of this entity
+	# 	wkic = []	# to aggregate wikicats of all the entities in the set except this one
+	# 	sbi = entity["subjects"]	# subjects of this entity
+	# 	sbic = []	# to aggregate subjects of all entities in the set except this one
+	#
+	# 	for ej in entities: # run over all of them
+	# 		if entity["@URI"] == ej["@URI"]:
+	# 			continue # skip the current one
+	# 		wkic.extend(ej["wikicats"]) # aggregate the others
+	# 		sbic.extend(ej["subjects"]) # aggregate the others
+	#
+	# 	print("\n", entity["@URI"])
+	# 	print("Wikicats: ", *wki)
+	# 	print("Subjects: ", *sbi)
+	#
+	# 	intersecWK = set(wkic).intersection(wki) # is there wikicat intersection?
+	# 	intersecSB = set(sbic).intersection(sbi) # is there subject intersection?
+	#
+	# 	print("Intersection WK", "-->", end=' ')
+	# 	print(*intersecWK)
+	# 	print("Intersection SB", "-->", end=' ')
+	# 	print(*intersecSB)
+	#
+	# 	if (len(intersecWK) > 0)  and (len(intersecSB) > 0):
+	# 		acceptedEntities.append(entity)
+	# 	else:
+	# 		_Print("No intersection. Discarded entity: ", entity["@URI"])
 
-		intersec = set(wkic).intersection(wki) # is there intersection?
-		if len(intersec) > 0:
-			rightEntities.append(entity)
-			print("Intersection", "-->", end=' ')
-			for x in intersec:
-				print(x, end=' ')
-		else:
-			_Print("No intersection. Discarded entity: ", entity["@URI"])
+	entities = acceptedEntities
 
-	entities = rightEntities
-
-	print("\nAfter the filtering by wikicat sharing there are:", len(entities))
+	print("\nAfter the filtering by wikicat/subject sharing there are: ", len(entities))
 	for entity in entities:
 		_Print(entity["@URI"])
 
 
-	# a right entity is required to share subjects with some other entity in the set
-	_Print("\nFiltering by subject sharing")
-	rightEntities = []
-	for entity in entities:
-		sbi = entity["subjects"]	# subjects of this entity
-		sbic = []	# subjects of all entities except this
-		for ej in entities:
-			if entity["@URI"] == ej["@URI"]:
-				continue
-			sbic.extend(ej["subjects"])
-		intersec = set(sbic).intersection(sbi) # is there intersection?
-		if len(intersec) > 0:
-			rightEntities.append(entity)
-		else:
-			_Print("Discarded entity: ", entity["@URI"])
-
-	entities = rightEntities
-
-	print("\nAfter the filtering by subject sharing there are", len(entities))
-	for entity in entities:
-		_Print(entity["@URI"])
+	# # a right entity is required to share subjects with some other entity in the set
+	# _Print("\nFiltering by subject sharing\n")
+	# acceptedEntities = []
+	# for entity in entities:
+	# 	sbi = entity["subjects"]	# subjects of this entity
+	# 	sbic = []	# subjects of all entities except this
+	# 	for ej in entities:
+	# 		if entity["@URI"] == ej["@URI"]:
+	# 			continue
+	# 		sbic.extend(ej["subjects"])
+	# 	intersec = set(sbic).intersection(sbi) # is there intersection?
+	# 	if len(intersec) > 0:
+	# 		acceptedEntities.append(entity)
+	# 	else:
+	# 		_Print("Discarded entity: ", entity["@URI"])
+	#
+	# entities = acceptedEntities
+	#
+	# print("\nAfter the filtering by subject sharing there are: ", len(entities))
+	# for entity in entities:
+	# 	_Print(entity["@URI"])
 
 
 
@@ -123,13 +159,6 @@ def getCategoriesInText(texto):
 
 	setWikicats = list(set(wikicats))  # removes duplicates
 	result["wikicats"] = setWikicats
-
-	# from collections import Counter
-	# counts = Counter(wikicats)
-	# repetidas = [value for value, count in counts.items() if count > 1]
-	#
-	# print("\nwikicats repetidas = ", repetidas)
-	# print("\nwikicats unicas = ", set(wikicats)-set(repetidas))
 
 	# to return the list of the subjects of the entities identified in the text
 	subjects = []
@@ -143,15 +172,19 @@ def getCategoriesInText(texto):
 	uris = []
 	for entity in entities:
 		listTypes = entity["combinedTypes"]
-		if ("Person" in listTypes):
+		cadTypes = " ".join(listTypes)
+		if ("Person" in cadTypes):
 			uris.append(entity["@URI"])
 			continue
-		if ("Location" in listTypes) or ("Place" in listTypes) or ("City" in listTypes) or ("Country" in listTypes):
+		if ("Location" in cadTypes) or ("Place" in cadTypes) or ("City" in cadTypes) or ("Country" in cadTypes):
 			uris.append(entity["@URI"])
 			continue
-		if "Event" in listTypes:
+		if "Event" in cadTypes:
 			uris.append(entity["@URI"])
 			continue
+		print("\nTipos: ", *listTypes)
+		print("Raw Tipos: "+ entity["rawSparqlTypes"])
+		print("Discarded from PLE set: ", entity["@URI"])
 
 	uris = list(set(uris))  # removes duplicates
 	result["URIs_persons_places_events"] = uris
@@ -293,6 +326,37 @@ class DBManager:
 
 		return list(set(listaNameEntities))
 
+	# to  change any URI by its redirect if necessary
+	def changeRedirect(self, dbsl_e):
+
+		uri = dbsl_e['@URI']
+		newUri = uri
+
+		query = """
+		SELECT ?newUri
+        WHERE {
+	       <"""+uri+""">  dbo:wikiPageRedirects ?newUri
+        }
+		"""
+		requestURI = self.session.post(_URL_DB, data={"query": query}, headers={"accept": "application/json"})
+
+		response = requestURI.result()
+		if response.status_code != 200:
+			print(response.status_code, "No OK answer checking redirects")
+		else:
+			try:
+				json = response.json()
+				results = json["results"]
+				bindings = results["bindings"]
+				if len(bindings) > 0:
+					newUri = bindings[0]["newUri"]["value"]
+					if newUri != uri:
+						print(uri, "-->", newUri)
+			except:
+				print("Error processing answer in checking redirects")
+
+		dbsl_e['@URI'] = newUri
+		return dbsl_e
 
 
 	# to organize all info in the dictionaries
@@ -300,6 +364,7 @@ class DBManager:
 	def scanEntities(self, dbsl_output):
 		try:
 			dbsl_entities = dbsl_output["Resources"]
+			dbsl_entities = [self.changeRedirect(dbsl_e) for dbsl_e in dbsl_entities] # follow redirects if any
 		except:
 			print("Warning scanEntities(): no Resources")
 			return
@@ -307,6 +372,7 @@ class DBManager:
 		# obtains all URIs corresponding to the entities identified by the DB-SL
 		totalUris = [x["@URI"] for x in dbsl_entities]
 		noDups = list(set(totalUris))  # remove duplicates
+
 		totalUris = ["<"+ x + ">" for x in noDups]
 		totalUris = " ".join(totalUris) # builds string  "<uri1> <uri2> ...  <urin>"
 
@@ -429,17 +495,20 @@ class DBManager:
 			# to isolate the new types and wikicats obtained with SPARQL
 			for _type in _rawSparqlTypes.split(";"):
 				# if the type starts with "http://dbpedia.org/ontology/", is added to the list of new types (sparqlTypes), without the prefix
+				if _type.startswith("http://dbpedia.org/class/yago/Wikicat"):
+					_t = _type.replace("http://dbpedia.org/class/yago/Wikicat", "")
+					_wikicats.append(_t)
 				if _type.startswith("http://dbpedia.org/ontology/"):
 					_t = _type.replace("http://dbpedia.org/ontology/", "")
 					_sparqlTypes.append(_t)
+				if _type.startswith("http://dbpedia.org/class/yago/"):
+					_t = _type.replace("http://dbpedia.org/class/yago/", "")
+					_sparqlTypes.append(_t)
+				_sparqlTypes.append(_type)
 				# if the type starts with "http://dbpedia.org/class/yago/Wikicat", is added to the list of wikicats (wikicats), without the prefix
-				elif _type.startswith("http://dbpedia.org/class/yago/Wikicat"):
-					_t = _type.replace("http://dbpedia.org/class/yago/Wikicat", "")
-					_wikicats.append(_t)
 
 			uri = rt["uri"]["value"] # get the URI
 			entityList = self.entityData["byUri"][uri]  # obtain the entity list from byUri corresponding to such URI
-
 			# add such info to all the entities corresponding to such list
 			newEntityList = []
 			for entity in entityList:
@@ -462,7 +531,6 @@ class DBManager:
 			# put the new list in byUri, replacing the old
 			self.entityData["byUri"][uri] = newEntityList
 
-
 		# now the same processing with the URIs representing persons (have typical peroson props)
 		# 3. Add person props to byUri
 		for rt in resultPersonProps["results"]["bindings"]:
@@ -481,7 +549,6 @@ class DBManager:
 			self.entityData["byUri"][uri] = newEntityList
 
 
-
 		# now study entities indexed in byUri to create byType (a dictionary with all types, each one with the list of entities from such type)
 		# 4. Create byType with byUri data
 		for entityList in self.entityData['byUri'].values():
@@ -495,7 +562,6 @@ class DBManager:
 						self.entityData['byType'][t] = []
 
 					self.entityData['byType'][t].append(entity)   # add this entity to the list of entities of such type
-
 
 
 		# update the information in byOffset with such fields added after step 1
