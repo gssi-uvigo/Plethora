@@ -29,6 +29,8 @@ CORPUS_FOLDER = os.getenv('HOME') + "/KORPUS/"
 This software uses Doc2Vec for assessing similarity, with a model pretrained with a generic corpus (AP).
 This pretrained model is not distributed with this software (3 files -700 MB- quite large for GitHub)
 Those files can be downloaded from https://github.com/shreyanse081/gensim_Doc-Word2Vec
+The main file is 'doc2vec.bin' and such name is configured in file aux_build.py
+AP_D2V_MODEL = MODELS_FOLDER+"doc2vec.bin"
 
 3.
 This software uses the DBpedia SpotLight (endpoint configurable in file ../ps_aux.py, that could be:
