@@ -9,14 +9,16 @@ from gensim.parsing.preprocessing import STOPWORDS as GENSIM_STOPWORDS
 
 # folders and filenames involved in corpus construction
 
-# initial text for corpus building
+# folder to store the corpus data (automatically created by the tool if not exists)
+CORPUS_FOLDER = os.getenv('HOME') + "/KORPUS/"
+
+# initial text for corpus building (default text provided in module_buildCorpus folder)
 INITIAL_TEXT = 'initialText.txt'
 
-CORPUS_FOLDER = os.getenv('HOME') + "/CloudStation/KORPUS2/"
+# folder for Doc2Vec models
+MODELS_FOLDER = CORPUS_FOLDER+"MODELS/"  # automatically created if not exists
+AP_D2V_MODEL = MODELS_FOLDER+"doc2vec.bin" # not in the software distribution, must be downloaded separately
 
-MODELS_FOLDER = CORPUS_FOLDER+"MODELS/"
-# LEE_D2V_MODEL = MODELS_FOLDER+"d2v_lee.without_stopwords.model"
-AP_D2V_MODEL = MODELS_FOLDER+"doc2vec.bin"
 
 # these are the files and folders created in the building of corpus
 
