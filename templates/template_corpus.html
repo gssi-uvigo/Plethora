@@ -556,7 +556,11 @@
 
 
 				function buildF4contents (result) {
-					results = ""
+					results = "<div style='color: red'>The computation of wikicats/subjects for all candidates has been deactivated.<br>"
+					results += "Such process is quite long and it is only useful to compute Jaccard similarities.<br>"
+					results += "As it has been proved that Jaccard similarities are worst than Doc2Vec ones, "
+					results += "they are no longer computed and wikicats/subjects are no longer necessary</div>"
+
 					//results += "<b>"+result['P4_numUrlsProcessed']  + " new files have been processed in this iteration</b><br>\n"
 					results += "<b>"+result['P4_lenListWithWKSB']  + " files with wikicats or subjects are available</b><br>\n"
 					results += "<b>"+result['P4_lenListWithoutWKSB']  + " files without wikicats nor subjects have been discarded</b><br>\n"

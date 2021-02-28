@@ -15,7 +15,7 @@ def getCategoriesInText(texto):
 	# make a query to DB-SL with texto
 	try:
 		objParams = {"text": texto, "confidence": 0.5, "support": 1}
-		# annotateTextRequest = requests.get(_URL_DB_SL_annotate, params=objParams, headers={"Accept": "application/json"})
+		_Print("Sending query to DB-SL")
 		annotateTextRequest = requests.post(_URL_DB_SL_annotate, data=objParams, headers={"Accept": "application/json"})
 	except Exception as e:
 		print("ERROR getCategoriesInText(): Problem querying DB-SL", str(e))
@@ -31,6 +31,7 @@ def getCategoriesInText(texto):
 
 	dbpediaManager = DBManager()
 
+	_Print("Scanning answer")
 	try:
 		dbpediaManager.scanEntities(dbpediaText)
 	except Exception as e:
@@ -43,7 +44,7 @@ def getCategoriesInText(texto):
 	if len(entities) == 0:
 		print("Warning getCategoriesInText(): No entities in text")
 
-	print("\nInitially, there are entities:", len(entities))
+	print("\nInitially, there are", len(entities), ". Let's go to analyse them")
 
 	# filter duplicated entities (same entity identified in different parts of the text)
 	uniqueEntities = []
@@ -63,13 +64,12 @@ def getCategoriesInText(texto):
 	_Print("\nFiltering by wikicats/subject sharing\n")
 	acceptedEntities = []
 
-
 	for entity in entities:
 		aceptado=False
 		rawTypes = entity["rawSparqlTypes"]
 		if "Person" in rawTypes:
 			acceptedEntities.append(entity)
-			print("Incluido por ser una persona: ", entity["@URI"])
+			_Print("Incluido por ser una persona: ", entity["@URI"])
 			continue
 
 		num_other_entities = 0
@@ -86,39 +86,9 @@ def getCategoriesInText(texto):
 				aceptado = True
 				break
 		if (aceptado == False):
-			print("\nNo aceptado: ", entity["@URI"])
-			print("Wikicats: ", *entity["wikicats"])
-			print("Subjects: ", *entity["subjects"])
-			print("rawTypes: ", entity["rawSparqlTypes"])
-
-	# for entity in entities:
-	# 	wki = entity["wikicats"]	# wikicats of this entity
-	# 	wkic = []	# to aggregate wikicats of all the entities in the set except this one
-	# 	sbi = entity["subjects"]	# subjects of this entity
-	# 	sbic = []	# to aggregate subjects of all entities in the set except this one
-	#
-	# 	for ej in entities: # run over all of them
-	# 		if entity["@URI"] == ej["@URI"]:
-	# 			continue # skip the current one
-	# 		wkic.extend(ej["wikicats"]) # aggregate the others
-	# 		sbic.extend(ej["subjects"]) # aggregate the others
-	#
-	# 	print("\n", entity["@URI"])
-	# 	print("Wikicats: ", *wki)
-	# 	print("Subjects: ", *sbi)
-	#
-	# 	intersecWK = set(wkic).intersection(wki) # is there wikicat intersection?
-	# 	intersecSB = set(sbic).intersection(sbi) # is there subject intersection?
-	#
-	# 	print("Intersection WK", "-->", end=' ')
-	# 	print(*intersecWK)
-	# 	print("Intersection SB", "-->", end=' ')
-	# 	print(*intersecSB)
-	#
-	# 	if (len(intersecWK) > 0)  and (len(intersecSB) > 0):
-	# 		acceptedEntities.append(entity)
-	# 	else:
-	# 		_Print("No intersection. Discarded entity: ", entity["@URI"])
+			_Print("No aceptado: ", entity["@URI"])
+		else:
+			_Print("Aceptado: ", entity["@URI"])
 
 	entities = acceptedEntities
 
@@ -182,9 +152,6 @@ def getCategoriesInText(texto):
 		if "Event" in cadTypes:
 			uris.append(entity["@URI"])
 			continue
-		print("\nTipos: ", *listTypes)
-		print("Raw Tipos: "+ entity["rawSparqlTypes"])
-		print("Discarded from PLE set: ", entity["@URI"])
 
 	uris = list(set(uris))  # removes duplicates
 	result["URIs_persons_places_events"] = uris
@@ -386,6 +353,8 @@ class DBManager:
 			FILTER(lang(?label) = 'en')}
 			GROUP BY ?label ?uri
 		"""
+		_Print("Sending extended query 1 to DBpedia")
+
 		# session is a FutureSessions object created in initialization
 		requestTypes = self.session.post(_URL_DB, data={"query": query}, headers={"accept": "application/json"})
 
@@ -400,10 +369,12 @@ class DBManager:
 			FILTER(regex(?t,'http://dbpedia.org/ontology/Person|http://dbpedia.org/class/yago/Person'))}
 			GROUP BY ?uri ?label
 		"""
+		_Print("Sending extended query 2 to DBpedia")
 		requestPersonProps = self.session.post(_URL_DB, data={"query": query}, headers={"accept": "application/json"})
 
 		# wait for query1 to complete
 		response1 = requestTypes.result()
+		_Print("Query 1 completed")
 		if response1.status_code != 200:
 			print("ERROR scanEntities(): problem querying types to DBpedia. Answer HTTP code: ", response1.status_code)
 			return
@@ -412,12 +383,14 @@ class DBManager:
 
 		# wait for query2 to complete
 		response2 = requestPersonProps.result()
+		_Print("Query 2 completed")
 		if response2.status_code != 200:
 			print("ERROR scanEntities(): problem querying person props to DBpedia. Answer HTTP code: ", response2.status_code)
 			return
 
 		resultPersonProps = requestPersonProps.result().json()   # obtain the JSON result of the first one
 
+		_Print("Processing extended results")
 
 		# add new fields for all entities to create enhanced entities
 		dbsl_enhancedEntities = []
