@@ -17,17 +17,29 @@ This project has been developed and tested with Pyhton 3.7
 The following packages are used (with the indicated version number).
 
 smart_open==4.1.0
+
 Flask==1.1.2
+
 requests-futures==0.9.9
+
 numpy==1.19.5
+
 requests==2.21.0
+
 gensim==3.8.3
+
 nltk==3.4.5
+
 bs4==0.0.1
+
 spacy==2.1.4
+
 
 To install a package (if you have pip3 installed):
 
 pip3 install package (to install a new package)
+
 or
+
 pip3 install --upgrade package (to upgrade an existing package)
+
