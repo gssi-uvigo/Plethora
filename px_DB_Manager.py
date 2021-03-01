@@ -64,41 +64,46 @@ def getCategoriesInText(texto):
 	_Print("\nFiltering by wikicats/subject sharing\n")
 	acceptedEntities = []
 
+	intersecciones = {}
+	globalNums = {}
 	for entity in entities:
-		_Print(entity["@URI"])
+		intersecciones[entity["@URI"]] = {}
+		globalNums[entity["@URI"]] = {}
+		globalNums[entity["@URI"]]["totalW"] = 0
+		globalNums[entity["@URI"]]["totalS"] = 0
 		aceptado=False
 		rawTypes = entity["rawSparqlTypes"]
 		if "Person" in rawTypes:
 			acceptedEntities.append(entity)
-			_Print("Incluido por ser una persona: ", entity["@URI"])
 			continue
 
 		num_other_entities = 0
 
-		intersecWKT = set()
-		intersecSBT = set()
 		for ej in entities: # run over all of them
 			if entity["@URI"] == ej["@URI"]:
 				continue # skip the current one
-			_Print(ej["@URI"])
 			intersecWK1 = set(ej["wikicats"]).intersection(entity["wikicats"])
-			print("Intersección Wikicats:", *intersecWK1)
-			intersecWKT = intersecWKT | intersecWK1
 			intersecSB1 = set(ej["subjects"]).intersection(entity["subjects"])
-			print("Intersección Subjects:", *intersecSB1)
-			intersecSBT = intersecSBT | intersecSB1
+			intersecciones[entity["@URI"]][ej["@URI"]] = (len(intersecWK1), len(intersecSB1))
+
 			if (len(intersecWK1) > 1) or (len(intersecSB1) > 1):
 				num_other_entities += 1
-			if num_other_entities == 3:
+			if num_other_entities == 2:
 				acceptedEntities.append(entity)
 				aceptado = True
 				break
 		if (aceptado == False):
 			_Print("No aceptado: ", entity["@URI"])
-			print("Intersección Wikicats:", *intersecWKT)
-			print("Intersección Subjects:", *intersecSBT)
 		else:
 			_Print("Aceptado: ", entity["@URI"])
+
+	# for k1 in intersecciones:
+	# 	for k2 in intersecciones[k1]:
+	# 		print(k1, k2, intersecciones[k1][k2][0], intersecciones[k1][k2][1])
+	# 		globalNums[k1]["totalW"] += intersecciones[k1][k2][0]
+	# 		globalNums[k1]["totalS"] += intersecciones[k1][k2][1]
+	# 	print(globalNums[k1]["totalW"], globalNums[k1]["totalS"])
+
 
 	entities = acceptedEntities
 
