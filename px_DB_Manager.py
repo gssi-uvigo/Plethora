@@ -74,23 +74,29 @@ def getCategoriesInText(texto):
 
 		num_other_entities = 0
 
+		intersecWKT = set()
+		intersecSBT = set()
 		for ej in entities: # run over all of them
 			if entity["@URI"] == ej["@URI"]:
 				continue # skip the current one
-			intersecWK = set(ej["wikicats"]).intersection(entity["wikicats"])
-			intersecSB = set(ej["subjects"]).intersection(entity["subjects"])
-			if (len(intersecWK) > 1) or (len(intersecSB) > 1):
+			intersecWK1 = set(ej["wikicats"]).intersection(entity["wikicats"])
+			intersecWKT = intersecWKT | intersecWK1
+			intersecSB1 = set(ej["subjects"]).intersection(entity["subjects"])
+			intersecSBT = intersecSBT | intersecSB1
+			if (len(intersecWK1) > 1) or (len(intersecSB1) > 1):
 				num_other_entities += 1
-			if num_other_entities == 2:
+			if num_other_entities == 3:
 				acceptedEntities.append(entity)
 				aceptado = True
 				break
 		if (aceptado == False):
 			_Print("No aceptado: ", entity["@URI"])
+			print("Intersección Wikicats:", *intersecWKT)
+			print("Intersección Subjects:", *intersecSBT)
 		else:
 			_Print("Aceptado: ", entity["@URI"])
-			print("Intersección Wikicats:", *intersecWK)
-			print("Intersección Subjects:", *intersecSB)
+			print("Intersección Wikicats:", *intersecWKT)
+			print("Intersección Subjects:", *intersecSBT)
 
 	entities = acceptedEntities
 
