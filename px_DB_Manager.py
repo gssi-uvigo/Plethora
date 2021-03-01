@@ -65,6 +65,7 @@ def getCategoriesInText(texto):
 	acceptedEntities = []
 
 	for entity in entities:
+		_Print(entity["@URI"])
 		aceptado=False
 		rawTypes = entity["rawSparqlTypes"]
 		if "Person" in rawTypes:
@@ -79,9 +80,12 @@ def getCategoriesInText(texto):
 		for ej in entities: # run over all of them
 			if entity["@URI"] == ej["@URI"]:
 				continue # skip the current one
+			_Print(ej["@URI"])
 			intersecWK1 = set(ej["wikicats"]).intersection(entity["wikicats"])
+			print("Intersección Wikicats:", *intersecWK1)
 			intersecWKT = intersecWKT | intersecWK1
 			intersecSB1 = set(ej["subjects"]).intersection(entity["subjects"])
+			print("Intersección Subjects:", *intersecSB1)
 			intersecSBT = intersecSBT | intersecSB1
 			if (len(intersecWK1) > 1) or (len(intersecSB1) > 1):
 				num_other_entities += 1
@@ -95,8 +99,6 @@ def getCategoriesInText(texto):
 			print("Intersección Subjects:", *intersecSBT)
 		else:
 			_Print("Aceptado: ", entity["@URI"])
-			print("Intersección Wikicats:", *intersecWKT)
-			print("Intersección Subjects:", *intersecSBT)
 
 	entities = acceptedEntities
 
