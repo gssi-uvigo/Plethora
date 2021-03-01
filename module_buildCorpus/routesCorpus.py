@@ -1121,7 +1121,7 @@ def doPh5(P0_originalText, P1_selectedWikicats):
 	# range over list of tuplas (name_E0entity, position_in_this sim)
 	# it is only to process all names, idx is irrelevant
 	# next(i for (n,i) in ratings["Fwikicats"]["originalEntities"] if n == name) --> i of first tupla where n == name
-	for name, idx in ratings["Fwikicats"]["originalEntities"]:
+	for name, idx in ratings["Spacy"]["originalEntities"]:
 		# dict with an entry for each entity, a 4-tupla with the positions for each sim
 		# E0entitiesPositions[name] = (next(i for (n,i) in ratings["Fwikicats"]["originalEntities"] if n == name), next(i for (n,i) in ratings["Fsubjects"]["originalEntities"] if n == name),\
 		# 							next(i for (n,i) in ratings["Spacy"]["originalEntities"] if n == name), next(i for (n,i) in ratings["Doc2Vec-AP"]["originalEntities"] if n == name))

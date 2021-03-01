@@ -89,6 +89,8 @@ def getCategoriesInText(texto):
 			_Print("No aceptado: ", entity["@URI"])
 		else:
 			_Print("Aceptado: ", entity["@URI"])
+			print("Intersección Wikicats:", *intersecWK)
+			print("Intersección Subjects:", *intersecSB)
 
 	entities = acceptedEntities
 
