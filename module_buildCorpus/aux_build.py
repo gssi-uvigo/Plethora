@@ -6,6 +6,8 @@ import os.path
 from collections import Counter
 from gensim.parsing.preprocessing import STOPWORDS as GENSIM_STOPWORDS
 
+# port to listen for requests
+PORT = 7777
 
 # folders and filenames involved in corpus construction
 

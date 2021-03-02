@@ -24,6 +24,7 @@ from routesCorpus import doPh1getWikicatsFromText as _doPh1getWikicatsFromText, 
 from routesCorpus import getWikicatUrls as _getWikicatUrls
 from routesCorpus import doPh3downloadCandidateTexts as _doPh3downloadCandidateTexts, doPh4identifyWikicats as _doPh4identifyWikicats
 from routesCorpus import doPh5computeSimilarities as _doPh5computeSimilarities, doPh6trainD2V as _doPh6trainD2V, doPh7reviewCorpus as _doPh7reviewCorpus
+from aux_build import PORT as _PORT # default 7777
 from aux_build import INITIAL_TEXT as _INITIAL_TEXT
 import aux_build
 import px_aux
@@ -87,9 +88,9 @@ def hello_world():
 	return render_template('./template_corpus.html', parDefaultText=initialText, parDebug=FLAG_LAB) # parDebug=True prints button labels with routes associated
 
 
-# start web server listening port 5060 by default if we have launched the corpus tool standalone
+# start web server listening port 7777 (configurable in aux_build.py)
 
 # the following is only executed if this is the main program, that is, if we launch the corpus tool directly from the 'module_buildCorpus' folder
 # not executed if we launch the corpus tool from the main tool, as the 'app' object is already available from the main tool
 if __name__ == '__main__':
-	app.run(host='0.0.0.0', port=5060, threaded=True)
+	app.run(host='0.0.0.0', port=_PORT, threaded=True)

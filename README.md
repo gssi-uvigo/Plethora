@@ -12,9 +12,9 @@ module_buildModel - subproject with a tool to automatize the training of Word2Ve
 
 REQUIREMENTS
 
-This project has been developed and tested with Pyhton 3.7
+1. This project has been developed and tested with Pyhton 3.7
 
-The following packages are used (with the indicated version number).
+2. The following packages are used (with the indicated version number).
 
 smart_open==4.1.0
 
@@ -34,6 +34,7 @@ bs4==0.0.1
 
 spacy==2.1.4
 
+scikit-learn==0.21.2
 
 To install a package (if you have pip3 installed):
 
@@ -43,3 +44,6 @@ or
 
 pip3 install --upgrade package (to upgrade an existing package)
 
+3. An english model is needed to compute similarities with spaCy. You must downloaded with the following command:
+
+python3 -m spacy download en_core_web_lg
