@@ -47,3 +47,7 @@ pip3 install --upgrade package (to upgrade an existing package)
 3. An english model is needed to compute similarities with spaCy. You must downloaded with the following command:
 
 python3 -m spacy download en_core_web_lg
+
+## Licencia
+
+Este proyecto está bajo la **Licencia Pública General GNU v2.0**. Para más detalles, consulta el archivo `LICENSE`.
